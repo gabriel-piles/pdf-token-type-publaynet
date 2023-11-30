@@ -1,1 +1,4 @@
-git+https://github.com/huridocs/pdf_paragraphs_extraction@b05418e26c74061683e60cd2d2c6662d6dcd82de
+git+https://github.com/huridocs/pdf-tokens-type-labeler@3cfc1fb9d0d3f5512c9bab1a56d010442b953308
+git+https://github.com/huridocs/pdf_paragraphs_extraction@9141d700247c57353c68ebfbff57951adb0b454d
+mapcalc
+pycocotools

@@ -1,0 +1,2 @@
+F1 score 95.2
+Accuracy score 98.16%

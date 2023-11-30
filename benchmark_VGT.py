@@ -11,7 +11,7 @@ from pdf_token_type_labels.TaskMistakes import TaskMistakes
 from pdf_token_type_labels.TokenType import TokenType
 from sklearn.metrics import f1_score, accuracy_score
 
-from get_data import load_random_labeled_data
+from get_data import load_labeled_data
 
 PDF_LABELED_DATA_ROOT_PATH = "/home/gabo/projects/pdf-labeled-data"
 
@@ -27,7 +27,7 @@ def convert_labels_to_publaynet(pdf_labels):
 def predict_for_benchmark():
     file_names = listdir("/home/gabo/projects/pdf-token-type-publaynet/data/VGT_predictions")
 
-    test_pdf_features = load_random_labeled_data(split="dev")
+    test_pdf_features = load_labeled_data(split="dev")
 
     truths = [token.token_type.get_index() for pdf_features in test_pdf_features for page, token in
               pdf_features.loop_tokens()]

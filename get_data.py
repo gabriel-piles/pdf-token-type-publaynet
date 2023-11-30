@@ -44,6 +44,7 @@ def get_token_types():
 
 
 def cache_pdf_features_from_path_labels(split: str, pdf_name_labels: dict[str, list[Label]]):
+    # change default token type to 7 in PageLabels
     cache_pdf_features_path = join(".", "data", "pdf_features", "train" if split == "train" else "dev")
     pdf_folder_path = join(".", "data", "pdfs", "train" if split == "train" else "dev")
 
@@ -65,7 +66,7 @@ def cache_pdf_features_from_path_labels(split: str, pdf_name_labels: dict[str, l
             pickle.dump(pdf_features, file)
 
 
-def get_pdf_name_labels(split: str, max_documents: int = 99999999) -> dict[str, list[Label]]:
+def get_pdf_name_labels(split: str, extra_1_px = False, from_document_count: int = 0, to_document_count: int = 9999999999) -> dict[str, list[Label]]:
     json_path = "data/publaynet/" + ("train" if split == "train" else "val") + ".json"
     source_labels = json.loads(Path(json_path).read_text())
 
@@ -75,33 +76,46 @@ def get_pdf_name_labels(split: str, max_documents: int = 99999999) -> dict[str, 
     for annotation in source_labels["annotations"]:
         pdf_name = images_names[annotation['image_id']][:-4]
 
-        if len(pdf_name_labels) >= max_documents and pdf_name not in pdf_name_labels:
+        if not from_document_count and len(pdf_name_labels) >= to_document_count and pdf_name not in pdf_name_labels:
             continue
 
         category_id = publaynet_types_to_token_types[annotation['category_id']]
-        label = Label(left=int(annotation['bbox'][0]) - 1,
-                      top=int(annotation['bbox'][1]) - 1,
-                      width=int(annotation['bbox'][2]) + 2,
-                      height=int(annotation['bbox'][3]) + 2,
-                      label_type=TokenType.from_text(category_id).get_index())
+        if extra_1_px:
+            label = Label(left=int(annotation['bbox'][0]) - 1,
+                          top=int(annotation['bbox'][1]) - 1,
+                          width=int(annotation['bbox'][2]) + 2,
+                          height=int(annotation['bbox'][3]) + 2,
+                          label_type=TokenType.from_text(category_id).get_index())
+
+        else:
+            label = Label(left=int(annotation['bbox'][0]),
+                          top=int(annotation['bbox'][1]),
+                          width=int(annotation['bbox'][2]),
+                          height=int(annotation['bbox'][3]),
+                          label_type=TokenType.from_text(category_id).get_index())
 
         pdf_name_labels.setdefault(pdf_name, list()).append(label)
 
-    return pdf_name_labels
+    if not from_document_count:
+        return pdf_name_labels
+
+    valid_keys = list(pdf_name_labels.keys())[from_document_count: to_document_count]
+    return {key: value for key, value in pdf_name_labels.items() if key in valid_keys}
 
 
 def cache_pdf_features(split: str, max_documents: int = 99999999):
-    pdf_name_labels = get_pdf_name_labels(split, max_documents)
+    # change default token type to 7 in PageLabels
+    pdf_name_labels = get_pdf_name_labels(split, False, 0, max_documents)
     cache_pdf_features_from_path_labels(split, pdf_name_labels)
 
 
-def load_random_labeled_data(split: str, max_documents: int = 99999999):
+def load_labeled_data(split: str, from_document_count: int = 0, to_document_count: int = 9999999999) -> list[PdfFeatures]:
     cache_pdf_features_path = join(".", "data", "pdf_features", "train" if split == "train" else "dev")
     pdfs_features: list[PdfFeatures] = list()
 
     all_files = listdir(cache_pdf_features_path)
 
-    files = all_files if len(all_files) <= max_documents else random.sample(all_files, max_documents)
+    files = all_files[from_document_count:to_document_count]
 
     for file in files:
         with open(join(cache_pdf_features_path, file), "rb") as f:
@@ -120,8 +134,12 @@ def load_pdf_feature(split: str, pdf_name: str):
         return pickle.load(f)
 
 
-def get_segmentation_labeled_data(split: str, max_documents: int = 99999999) -> list[PdfParagraphTokens]:
-    pdf_name_labels = get_pdf_name_labels(split, max_documents)
+def get_segmentation_labeled_data(split: str, from_document_count: int = 0, to_document_count: int = 9999999999) -> list[PdfParagraphTokens]:
+    pdf_name_labels = get_pdf_name_labels(split, True, from_document_count, to_document_count)
+
+    if not pdf_name_labels:
+        return []
+
     pdfs_paragraphs_tokens: list[PdfParagraphTokens] = list()
     for pdf_name, labels in pdf_name_labels.items():
         pdf_feature = load_pdf_feature(split, pdf_name)
@@ -137,7 +155,7 @@ def get_segmentation_labeled_data(split: str, max_documents: int = 99999999) -> 
 
 
 def show_segmentation():
-    pdf_path_labels = get_pdf_name_labels('dev', 20)
+    pdf_path_labels = get_pdf_name_labels('dev', False, 20)
     for file_name, labels in pdf_path_labels.items():
         origin = join("/home/gabo/projects/pdf-token-type-publaynet/data/pdfs/dev", file_name + ".pdf")
         to = join("/home/gabo/projects/pdf-labeled-data/pdfs", file_name, "document.pdf")
@@ -156,6 +174,7 @@ def show_segmentation():
 if __name__ == '__main__':
     start = time()
     print("start")
+    cache_pdf_features("dev")
     print("finished in", round(time() - start, 1), "seconds")
     print()
 
