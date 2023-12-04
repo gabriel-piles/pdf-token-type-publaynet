@@ -59,7 +59,7 @@ def train_segmentation():
 
 
 def cache_training_data():
-    for i in range(3):
+    for i in range(5):
         start_cache = time()
         print(f"Caching chunk {i}")
         pdf_paragraph_tokens_list = get_segmentation_labeled_data(split="train", from_document_count=MAX_DOCUMENTS * i,
@@ -94,5 +94,5 @@ def cache_validation_data():
 if __name__ == '__main__':
     print("start")
     start = time()
-    train_segmentation()
+    cache_training_data()
     print("finished in", int(time() - start), "seconds")

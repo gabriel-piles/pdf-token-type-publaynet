@@ -24,7 +24,6 @@ publaynet_types_to_token_types = {
     4: "table",
     5: "figure"}
 
-
 PDF_LABELED_DATA_ROOT_PATH = "/home/gabo/projects/pdf-labeled-data"
 
 
@@ -66,7 +65,8 @@ def cache_pdf_features_from_path_labels(split: str, pdf_name_labels: dict[str, l
             pickle.dump(pdf_features, file)
 
 
-def get_pdf_name_labels(split: str, extra_1_px = False, from_document_count: int = 0, to_document_count: int = 9999999999) -> dict[str, list[Label]]:
+def get_pdf_name_labels(split: str, extra_1_px=False, from_document_count: int = 0, to_document_count: int = 9999999999) -> \
+dict[str, list[Label]]:
     json_path = "data/publaynet/" + ("train" if split == "train" else "val") + ".json"
     source_labels = json.loads(Path(json_path).read_text())
 
@@ -113,7 +113,7 @@ def load_labeled_data(split: str, from_document_count: int = 0, to_document_coun
     cache_pdf_features_path = join(".", "data", "pdf_features", "train" if split == "train" else "dev")
     pdfs_features: list[PdfFeatures] = list()
 
-    all_files = listdir(cache_pdf_features_path)
+    all_files = sorted(listdir(cache_pdf_features_path))
 
     files = all_files[from_document_count:to_document_count]
 
@@ -134,7 +134,8 @@ def load_pdf_feature(split: str, pdf_name: str):
         return pickle.load(f)
 
 
-def get_segmentation_labeled_data(split: str, from_document_count: int = 0, to_document_count: int = 9999999999) -> list[PdfParagraphTokens]:
+def get_segmentation_labeled_data(split: str, from_document_count: int = 0, to_document_count: int = 9999999999) -> list[
+    PdfParagraphTokens]:
     pdf_name_labels = get_pdf_name_labels(split, True, from_document_count, to_document_count)
 
     if not pdf_name_labels:
@@ -165,7 +166,7 @@ def show_segmentation():
 
         for label in labels:
             metadata = TokenType.from_index(label.label_type).value
-            bounding_box = Rectangle.from_width_height(label.left,label.top, label.width, label.height)
+            bounding_box = Rectangle.from_width_height(label.left, label.top, label.width, label.height)
             task_mistakes.add(1, bounding_box, 1, 1, metadata)
 
         task_mistakes.save()
@@ -177,4 +178,3 @@ if __name__ == '__main__':
     cache_pdf_features("dev")
     print("finished in", round(time() - start, 1), "seconds")
     print()
-
