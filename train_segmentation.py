@@ -58,8 +58,8 @@ def train_segmentation():
     gbm.save_model(SEGMENTATION_MODEL_PATH, num_iteration=gbm.best_iteration)
 
 
-def cache_training_data():
-    for i in range(5):
+def cache_segmentation_training_data():
+    for i in range(8):
         start_cache = time()
         print(f"Caching chunk {i}")
         pdf_paragraph_tokens_list = get_segmentation_labeled_data(split="train", from_document_count=MAX_DOCUMENTS * i,
@@ -94,5 +94,5 @@ def cache_validation_data():
 if __name__ == '__main__':
     print("start")
     start = time()
-    cache_training_data()
+    cache_segmentation_training_data()
     print("finished in", int(time() - start), "seconds")

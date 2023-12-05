@@ -47,8 +47,8 @@ def train_token_type():
     gbm.save_model(TOKEN_TYPE_MODEL_PATH, num_iteration=gbm.best_iteration)
 
 
-def cache_training_data():
-    for i in range(4):
+def cache_token_type_training_data():
+    for i in range(8):
         start_cache = time()
         print(f"Caching chunk {i}")
         train_pdf_features = load_labeled_data(split="train", from_document_count=MAX_DOCUMENTS * i,
@@ -82,6 +82,6 @@ if __name__ == "__main__":
     start = time()
     print("train_token_type")
 
-    cache_training_data()
+    cache_token_type_training_data()
     print("finished in", int(time() - start), "seconds")
 
