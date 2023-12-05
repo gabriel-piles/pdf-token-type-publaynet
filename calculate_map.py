@@ -1,10 +1,12 @@
 import json
 import os
 import shutil
+from collections import Counter
 from os.path import join
 from pathlib import Path
 from time import time
 
+import numpy as np
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
 from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
@@ -18,7 +20,7 @@ from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-from get_data import get_pdf_name_labels, load_pdf_feature, load_labeled_data, PDF_LABELED_DATA_ROOT_PATH
+from get_data import get_pdf_name_labels, load_pdf_feature, load_labeled_data, PDF_LABELED_DATA_ROOT_PATH, balance_data
 from train_token_type import TOKEN_TYPE_MODEL_PATH
 from train_segmentation import SEGMENTATION_MODEL_PATH
 
@@ -230,9 +232,34 @@ def create_coco_sub_file():
     Path(f"data/publaynet/train_chunk_{chunk}.json").write_text(json.dumps(ground_truth))
 
 
+def check_unbalanced_data():
+    train = np.load("data/training_data/token_type/val/chunk_0/x.npy")
+    labels = np.load("data/training_data/token_type/val/chunk_0/y.npy")
+    count = Counter()
+    count.update(labels)
+    print(count)
+
+    print("train.size")
+    print(train.shape)
+    print("labels.size")
+    print(labels.shape)
+
+    train, labels = balance_data(train, labels)
+
+    count = Counter()
+    count.update(labels)
+    print(count)
+
+    print("train.size")
+    print(train.shape)
+    print("labels.size")
+    print(labels.shape)
+
+
 if __name__ == '__main__':
     print("start")
     start = time()
+    check_unbalanced_data()
     # map_score(truth_path="data/publaynet/val.json")
-    save_mistakes(truth_path="data/publaynet/val.json", predictions_path="data/publaynet/predictions_moving_coordinates_1.json")
+    # save_mistakes(truth_path="data/publaynet/val.json", predictions_path="data/publaynet/predictions_moving_coordinates_1.json")
     print("finished in", int(time() - start), "seconds")

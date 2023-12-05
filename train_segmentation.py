@@ -1,3 +1,4 @@
+from collections import Counter
 from os import listdir
 from os.path import join
 from pathlib import Path
@@ -33,6 +34,7 @@ def loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list: list[PdfParagraphTokens
             yield pdf_paragraph_tokens, page.tokens[-1], page.tokens[-1]
 
 
+
 def train_segmentation():
 
     print(f"Getting model input")
@@ -48,6 +50,7 @@ def train_segmentation():
 
         labels = np.concatenate((labels, np.load(join(segmentation_training_data_path, folder_name, "y.npy"))), axis=0)
 
+    x_train, labels = balance_data(x_train, labels)
     lgb_train = lgb.Dataset(x_train, labels)
     print(f"Training")
     print(str(x_train.shape))

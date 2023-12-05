@@ -3,11 +3,13 @@ import os
 import pickle
 import random
 import shutil
+from collections import Counter
 from os import listdir
 from os.path import join, exists
 from pathlib import Path
 from time import time
 
+import numpy as np
 from paragraph_extraction_trainer.PdfParagraphTokens import PdfParagraphTokens
 from pdf_features.PdfFeatures import PdfFeatures
 from pdf_features.Rectangle import Rectangle
@@ -63,6 +65,24 @@ def cache_pdf_features_from_path_labels(split: str, pdf_name_labels: dict[str, l
         pdf_features.set_token_types(pdf_labels)
         with open(pickle_path, "wb") as file:
             pickle.dump(pdf_features, file)
+
+
+def balance_data(x_train, labels):
+    np.random.seed(2)
+    count = Counter()
+    count.update(labels)
+
+    remove_count = 2 * count[6] // 3
+    remove_indexes = np.random.choice(np.where(labels == 6)[0], remove_count, replace=False)
+    x_train = np.delete(x_train, remove_indexes, axis=0)
+    labels = np.delete(labels, remove_indexes)
+
+    remove_count = count[3] // 3
+    remove_indexes = np.random.choice(np.where(labels == 3)[0], remove_count, replace=False)
+    x_train = np.delete(x_train, remove_indexes, axis=0)
+    labels = np.delete(labels, remove_indexes)
+
+    return x_train, labels
 
 
 def get_pdf_name_labels(split: str, extra_1_px=False, from_document_count: int = 0, to_document_count: int = 9999999999) -> \
