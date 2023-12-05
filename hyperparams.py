@@ -1,130 +1,92 @@
 import os.path
-import pickle
 from os import listdir
 from os.path import join
 from pathlib import Path
+import time
+from typing import Callable
 
 import numpy as np
 import optuna
+from pdf_token_type_labels.TokenType import TokenType
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
-from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import f1_score
 
 from train import train
-from train_token_type import token_type_training_data_path
 import lightgbm as lgb
 
+TOKEN_TYPE_DATA_PATH = "data/training_data/token_type/train"
+SEGMENTATION_DATA_PATH = "data/training_data/segmentation/train"
 
-def get_data(data_path: str, label_path: str):
-    print("Loading X from: ", data_path)
-    print("Loading y from: ", label_path)
-    with open(data_path, "rb") as f:
-        x_train = pickle.load(f)
-    with open(label_path, "rb") as f:
-        y_train = pickle.load(f)
-    return x_train, np.array(y_train)
+TOKEN_TYPE_MODEL_PATH = "model/token_type_hyperparams.model"
+SEGMENTATION_MODEL_PATH = "model/segmentation_hyperparams.model"
 
 
-def save_hyperparameters(params, roc_auc, content_path):
+def save_hyperparameters(model_configuration, f1, content_path):
+    string_f1 = f"{f1:.3}"
     if os.path.exists(content_path):
         content = Path(content_path).read_text()
-        content += "\n" + '\t'.join([str(roc_auc)] + list(params.dict().values()))
+        content += "\n" + '\t'.join([string_f1] + [str(x) for x in model_configuration.dict().values()])
         Path(content_path).write_text(content)
     else:
-        Path(content_path).write_text('\t'.join(["Roc Auc"] + list(params.dict().keys())) + "\n" +
-                                      '\t'.join([str(roc_auc)] + list(params.dict().values())))
+        Path(content_path).write_text('\t'.join(["f1"] + [str(x) for x in model_configuration.dict().keys()]) + "\n" +
+                                      '\t'.join([string_f1] + [str(x) for x in model_configuration.dict().values()]))
 
 
 def objective_token_type(trial: optuna.trial.Trial):
-    params = ModelConfiguration()
-    params.deterministic = False
-    params.num_leaves = trial.suggest_int("num_leaves", 100, 500)
-    params.bagging_fraction = trial.suggest_float("bagging_fraction", 0.1, 1.0)
-    params.bagging_freq = trial.suggest_int("bagging_freq", 1, 10)
-    params.feature_fraction = trial.suggest_float("feature_fraction", 0.1, 1.0)
-    params.lambda_l1 = trial.suggest_float("lambda_l1", 1e-08, 10.0, log=True)
-    params.lambda_l2 = trial.suggest_float("lambda_l2", 1e-08, 10.0, log=True)
-    params.min_data_in_leaf = trial.suggest_int("min_data_in_leaf", 5, 100)
-    train(params, TOKEN_TYPE_DATA_PATH, TOKEN_TYPE_MODEL_PATH, 7)
+    start = time.time()
+    model_configuration = get_model_configuration(trial)
+
+    print(f"Start try of hyperparams at {time.localtime().tm_hour}:{time.localtime().tm_min}")
+    print('\t'.join([str(x) for x in model_configuration.dict().keys()]))
+    print('\t'.join([str(x) for x in model_configuration.dict().values()]))
+
+    train(model_configuration, TOKEN_TYPE_DATA_PATH, TOKEN_TYPE_MODEL_PATH, 7)
     model = lgb.Booster(model_file=TOKEN_TYPE_MODEL_PATH)
-    x_test = np.load(join(TOKEN_TYPE_DATA_PATH, sorted(list(listdir(TOKEN_TYPE_DATA_PATH)))[7], "x.npy"))
-    y_test = np.load(join(TOKEN_TYPE_DATA_PATH, sorted(list(listdir(TOKEN_TYPE_DATA_PATH)))[7], "y.npy"))
+    chunks_paths = sorted(list(listdir(TOKEN_TYPE_DATA_PATH)))
+
+    x_test = np.load(join(TOKEN_TYPE_DATA_PATH, chunks_paths[7], "x.npy"))
+    y_test = np.load(join(TOKEN_TYPE_DATA_PATH, chunks_paths[7], "y.npy"))
+
     y_pred_scores = model.predict(x_test, num_iteration=model.best_iteration)
-    roc_auc = roc_auc_score(y_test, y_pred_scores[:, 1], multi_class="ovr")
-    save_hyperparameters(params, roc_auc, "results/token_type_hyperparameters.txt")
+    y_prediction_categories = [np.argmax(prediction_scores) for prediction_scores in y_pred_scores]
 
-    return roc_auc
+    f1 = f1_score(y_test, y_prediction_categories, average="macro")
+    save_hyperparameters(model_configuration, f1, "results/token_type_hyperparameters.txt")
 
+    print("finished in", round(time.time() - start, 1), "seconds")
 
-def objective_segmentation(trial: optuna.trial.Trial):
-    params = ModelConfiguration()
-    params.context_size = 1
-    params.num_class = 2
-    params.deterministic = False
-    params.num_leaves = trial.suggest_int("num_leaves", 100, 500)
-    params.bagging_fraction = trial.suggest_float("bagging_fraction", 0.1, 1.0)
-    params.bagging_freq = trial.suggest_int("bagging_freq", 1, 10)
-    params.feature_fraction = trial.suggest_float("feature_fraction", 0.1, 1.0)
-    params.lambda_l1 = trial.suggest_float("lambda_l1", 1e-08, 10.0, log=True)
-    params.lambda_l2 = trial.suggest_float("lambda_l2", 1e-08, 10.0, log=True)
-    params.min_data_in_leaf = trial.suggest_int("min_data_in_leaf", 5, 100)
-    train(params, SEGMENTATION_DATA_PATH, SEGMENTATION_MODEL_PATH, 7)
-    model = lgb.Booster(model_file=SEGMENTATION_MODEL_PATH)
-    x_test = np.load(join(SEGMENTATION_DATA_PATH, sorted(list(listdir(SEGMENTATION_DATA_PATH)))[7], "x.npy"))
-    y_test = np.load(join(SEGMENTATION_DATA_PATH, sorted(list(listdir(SEGMENTATION_DATA_PATH)))[7], "y.npy"))
-    y_pred = model.predict(x_test, num_iteration=model.best_iteration)
-    roc_auc = roc_auc_score(y_test, y_pred, multi_class="ovr")
-    save_hyperparameters(params, roc_auc, "results/segmentation_hyperparameters.txt")
-
-    return roc_auc
+    return f1
 
 
-def optuna_automatic_tuning(task: str):
+def get_model_configuration(trial, is_segmentation: bool = False):
+    model_configuration = ModelConfiguration()
+
+    if is_segmentation:
+        model_configuration.context_size = 1
+        model_configuration.num_class = 2
+
+    model_configuration.deterministic = False
+    model_configuration.num_boost_round = trial.suggest_int("num_boost_round", 300, 700)
+    model_configuration.num_leaves = trial.suggest_int("num_leaves", 100, 500)
+    model_configuration.bagging_fraction = trial.suggest_float("bagging_fraction", 0.1, 1.0)
+    model_configuration.bagging_freq = trial.suggest_int("bagging_freq", 1, 10)
+    model_configuration.feature_fraction = trial.suggest_float("feature_fraction", 0.1, 1.0)
+    model_configuration.lambda_l1 = trial.suggest_float("lambda_l1", 1e-08, 10.0, log=True)
+    model_configuration.lambda_l2 = trial.suggest_float("lambda_l2", 1e-08, 10.0, log=True)
+    model_configuration.min_data_in_leaf = trial.suggest_int("min_data_in_leaf", 5, 100)
+    return model_configuration
+
+
+def optuna_automatic_tuning(objective: Callable):
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=100)
-
-    print("Number of finished trials: ", len(study.trials))
-    print("Best trial: ")
-    trial = study.best_trial
-
-    print("Value: ", trial.value)
-    print("Params: ")
-    result_string: str = ""
-    for key, value in trial.params.items():
-        print(f"\t{key}: {value}")
-        result_string += f'"{key}": {value},\n'
-    result_string += f"-> Best trial value: {str(trial.value)}\n"
-
-    result_string += "\n\n\n"
-
-    with open(f"src/tuned_parameters/{task}.txt", "a") as result_file:
-        result_file.write(result_string)
+    study.optimize(objective, n_trials=200, gc_after_trial=True)
 
 
-def train_token_type(configuration, model_path):
-
-    print(f"Getting model input")
-
-    labels = np.array([])
-    x_train = None
-
-    for folder_name in list(listdir(token_type_training_data_path))[:2]:
-        if x_train is None:
-            x_train = np.load(join(token_type_training_data_path, folder_name, "x.npy"))
-        else:
-            x_train = np.concatenate((x_train, np.load(join(token_type_training_data_path, folder_name, "x.npy"))), axis=0)
-
-        labels = np.concatenate((labels, np.load(join(token_type_training_data_path, folder_name, "y.npy"))), axis=0)
-
-    lgb_train = lgb.Dataset(x_train, labels)
-    print(f"Training")
-    print(str(x_train.shape))
-    gbm = lgb.train(configuration.dict(), lgb_train)
-
-    print(f"Saving")
-    Path(model_path).parent.mkdir(exist_ok=True)
-    gbm.save_model(model_path, num_iteration=gbm.best_iteration)
+def create_one_hot(truth_category: int):
+    one_hot = [0] * len(TokenType)
+    one_hot[truth_category] = 1
+    return one_hot
 
 
 if __name__ == '__main__':
-    optimize()
+    optuna_automatic_tuning(objective_token_type)

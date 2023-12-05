@@ -1,0 +1,6 @@
+f1	context_size	num_boost_round	num_leaves	bagging_fraction	lambda_l1	lambda_l2	feature_fraction	bagging_freq	min_data_in_leaf	feature_pre_filter	boosting_type	objective	metric	learning_rate	seed	num_class	verbose	deterministic	resume_training	early_stopping_rounds
+0.924	4	324	335	0.7524873912957896	1.4297985696157086e-05	1.6366989058076276e-05	0.9586275685045866	9	36	False	gbdt	multiclass	multi_logloss	0.1	22	13	-1	False	False	10
+0.92	4	593	471	0.5211085453029657	2.0502084364212733e-05	4.9865303730532774e-08	0.18861290606159842	1	24	False	gbdt	multiclass	multi_logloss	0.1	22	13	-1	False	False	10
+0.921	4	575	207	0.38843226530380914	8.597568090235303e-08	0.11104943857701204	0.5093509752444216	9	65	False	gbdt	multiclass	multi_logloss	0.1	22	13	-1	False	False	10
+0.924	4	462	355	0.6688948120554663	1.5201861194287387e-06	0.04299109631875044	0.9560127406216548	1	22	False	gbdt	multiclass	multi_logloss	0.1	22	13	-1	False	False	10
+0.925	4	374	252	0.7476732153391457	0.006519609640790847	0.0003902178111143612	0.46417115604307346	6	40	False	gbdt	multiclass	multi_logloss	0.1	22	13	-1	False	False	10

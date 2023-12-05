@@ -3,3 +3,4 @@ git+https://github.com/huridocs/pdf_paragraphs_extraction@3136c36c27baf1152cee64
 mapcalc
 pycocotools
 lightgbm
+optuna

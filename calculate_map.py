@@ -37,6 +37,7 @@ categories = {1: TokenType.TEXT,
               4: TokenType.TABLE,
               5: TokenType.FIGURE}
 
+
 def get_image_name_image_id(split: str = "val"):
     image_name_image_id = {}
 

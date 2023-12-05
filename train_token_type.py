@@ -1,14 +1,11 @@
-from os import listdir
 from os.path import join
 from pathlib import Path
 from time import time
 
-import numpy as np
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
-from get_data import load_labeled_data, balance_data
-import lightgbm as lgb
+from get_data import load_labeled_data
 
 
 TOKEN_TYPE_MODEL_PATH = join(Path(__file__).parent, "model", "token_type.model")
