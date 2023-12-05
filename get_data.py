@@ -72,6 +72,13 @@ def balance_data(x_train, labels):
     count = Counter()
     count.update(labels)
 
+    if len(count) == 2:
+        remove_count = count[1] // 3
+        remove_indexes = np.random.choice(np.where(labels == 1)[0], remove_count, replace=False)
+        x_train = np.delete(x_train, remove_indexes, axis=0)
+        labels = np.delete(labels, remove_indexes)
+        return x_train, labels
+
     remove_count = 2 * count[6] // 3
     remove_indexes = np.random.choice(np.where(labels == 6)[0], remove_count, replace=False)
     x_train = np.delete(x_train, remove_indexes, axis=0)

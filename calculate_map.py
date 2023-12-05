@@ -233,11 +233,12 @@ def create_coco_sub_file():
 
 
 def check_unbalanced_data():
-    train = np.load("data/training_data/token_type/val/chunk_0/x.npy")
-    labels = np.load("data/training_data/token_type/val/chunk_0/y.npy")
+    train = np.load("data/training_data/segmentation/val/chunk_0/x.npy")
+    labels = np.load("data/training_data/segmentation/val/chunk_0/y.npy")
     count = Counter()
     count.update(labels)
     print(count)
+    print(len(count))
 
     print("train.size")
     print(train.shape)
