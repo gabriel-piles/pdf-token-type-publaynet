@@ -7,7 +7,7 @@ import numpy as np
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
-from get_data import load_labeled_data
+from get_data import load_labeled_data, balance_data
 import lightgbm as lgb
 
 
@@ -21,30 +21,6 @@ model_configuration.num_leaves = 100
 MAX_DOCUMENTS = 10000
 token_type_training_data_path = join("data", "training_data", "token_type", "train")
 
-
-def train_token_type():
-
-    print(f"Getting model input")
-
-    labels = np.array([])
-    x_train = None
-
-    for folder_name in list(listdir(token_type_training_data_path))[:2]:
-        if x_train is None:
-            x_train = np.load(join(token_type_training_data_path, folder_name, "x.npy"))
-        else:
-            x_train = np.concatenate((x_train, np.load(join(token_type_training_data_path, folder_name, "x.npy"))), axis=0)
-
-        labels = np.concatenate((labels, np.load(join(token_type_training_data_path, folder_name, "y.npy"))), axis=0)
-
-    lgb_train = lgb.Dataset(x_train, labels)
-    print(f"Training")
-    print(str(x_train.shape))
-    gbm = lgb.train(model_configuration.dict(), lgb_train)
-
-    print(f"Saving")
-    Path(TOKEN_TYPE_MODEL_PATH).parent.mkdir(exist_ok=True)
-    gbm.save_model(TOKEN_TYPE_MODEL_PATH, num_iteration=gbm.best_iteration)
 
 
 def cache_token_type_training_data():
