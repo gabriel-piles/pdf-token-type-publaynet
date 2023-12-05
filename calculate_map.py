@@ -163,6 +163,8 @@ def map_score(truth_path: str, prediction_path: str):
     print('\t'.join(["overall"] + [categories[x].value.lower() for x in average_precision_per_category.keys()]))
     print('\t'.join([str(overall)] + [str(round(x, 3)) for x in average_precision_per_category.values()]))
 
+    return sum([x for x in list(average_precision_per_category.values())[:4]]) / 4
+
 
 def save_mistakes(truth_path: str, predictions_path: str):
     truth_coco_format = json.loads(Path(truth_path).read_text())
@@ -220,7 +222,7 @@ def learn_coco_format():
 
 def create_coco_sub_file():
     image_name_image_id = get_image_name_image_id("train")
-    chunk = 0
+    chunk = 3
     pdfs_features: list[PdfFeatures] = load_labeled_data(split="train", from_document_count=chunk * 10000,
                                                          to_document_count=(chunk + 1) * 10000)
     image_ids = {image_name_image_id[p.file_name] for p in pdfs_features}
@@ -261,7 +263,8 @@ def check_unbalanced_data():
 if __name__ == '__main__':
     print("start")
     start = time()
-    check_unbalanced_data()
+    # check_unbalanced_data()
     # map_score(truth_path="data/publaynet/val.json")
     # save_mistakes(truth_path="data/publaynet/val.json", predictions_path="data/publaynet/predictions_moving_coordinates_1.json")
+    create_coco_sub_file()
     print("finished in", int(time() - start), "seconds")

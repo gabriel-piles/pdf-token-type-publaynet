@@ -1,3 +1,4 @@
+import json
 import os.path
 from os import listdir
 from os.path import join
@@ -7,9 +8,14 @@ from typing import Callable
 
 import numpy as np
 import optuna
+from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
+from paragraph_extraction_trainer.PdfSegment import PdfSegment
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
+from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from sklearn.metrics import f1_score
 
+from calculate_map import token_types_to_publaynet_types, get_image_name_image_id, get_one_annotation, map_score
+from get_data import get_pdf_name_labels, load_pdf_feature
 from train import train
 import lightgbm as lgb
 
@@ -18,6 +24,8 @@ SEGMENTATION_DATA_PATH = "data/training_data/segmentation/train"
 
 TOKEN_TYPE_MODEL_PATH = "model/token_type_hyperparams.model"
 SEGMENTATION_MODEL_PATH = "model/segmentation_hyperparams.model"
+
+PREDICTIONS_PATH = "data/publaynet/predictions_hyperparams.json"
 
 
 def save_hyperparameters(model_configuration, f1, content_path):
@@ -57,6 +65,52 @@ def objective_token_type(trial: optuna.trial.Trial):
     return f1
 
 
+def set_segmentation_predictions(model_configuration: ModelConfiguration, chunk: int):
+    pdf_name_labels = get_pdf_name_labels('train', from_document_count=10000 * chunk, to_document_count=10000*(chunk + 1))
+    test_pdf_features = [load_pdf_feature('train', x) for x in pdf_name_labels if load_pdf_feature('train', x)]
+
+    print("Predicting token types for", len(test_pdf_features), "pdfs")
+    trainer = TokenTypeTrainer(test_pdf_features, ModelConfiguration())
+    trainer.set_token_types(TOKEN_TYPE_MODEL_PATH)
+
+    print("Predicting segmentation for", len(test_pdf_features), "pdfs")
+    trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
+    segments: list[PdfSegment] = trainer.get_pdf_segments(SEGMENTATION_MODEL_PATH)
+
+    segments = [s for s in segments if s.segment_type in token_types_to_publaynet_types.keys()]
+
+    predictions_coco_format = json.loads(Path(f"data/publaynet/train_chunk_{chunk}.json").read_text())
+
+    image_name_image_id = get_image_name_image_id('train')
+    annotations = []
+    for i, segment in enumerate(segments):
+        annotations.append(get_one_annotation(i, image_name_image_id[segment.pdf_name], segment))
+
+    predictions_coco_format['annotations'] = annotations
+    Path(PREDICTIONS_PATH).write_text(json.dumps(predictions_coco_format))
+
+
+def objective_segmentation(trial: optuna.trial.Trial):
+    start = time.time()
+    model_configuration = get_model_configuration(trial)
+
+    print(f"Start try of hyperparams at {time.localtime().tm_hour}:{time.localtime().tm_min}")
+    print('\t'.join([str(x) for x in model_configuration.dict().keys()]))
+    print('\t'.join([str(x) for x in model_configuration.dict().values()]))
+
+    train(model_configuration, SEGMENTATION_DATA_PATH, SEGMENTATION_MODEL_PATH, 3)
+
+    test_chunk = 3
+    set_segmentation_predictions(model_configuration, test_chunk)
+
+    coco_score = map_score(truth_path=f"data/publaynet/train_chunk_{test_chunk}.json", prediction_path=PREDICTIONS_PATH)
+    save_hyperparameters(model_configuration, coco_score, "results/segmentation_hyperparameters.txt")
+
+    print("finished in", round(time.time() - start, 1), "seconds")
+
+    return coco_score
+
+
 def get_model_configuration(trial, is_segmentation: bool = False):
     model_configuration = ModelConfiguration()
 
@@ -82,4 +136,4 @@ def optuna_automatic_tuning(objective: Callable):
 
 
 if __name__ == '__main__':
-    optuna_automatic_tuning(objective_token_type)
+    optuna_automatic_tuning(objective_segmentation)
