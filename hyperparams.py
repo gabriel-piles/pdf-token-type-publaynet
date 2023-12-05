@@ -7,7 +7,6 @@ from typing import Callable
 
 import numpy as np
 import optuna
-from pdf_token_type_labels.TokenType import TokenType
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from sklearn.metrics import f1_score
 
@@ -80,12 +79,6 @@ def get_model_configuration(trial, is_segmentation: bool = False):
 def optuna_automatic_tuning(objective: Callable):
     study = optuna.create_study(direction="maximize")
     study.optimize(objective, n_trials=200, gc_after_trial=True)
-
-
-def create_one_hot(truth_category: int):
-    one_hot = [0] * len(TokenType)
-    one_hot[truth_category] = 1
-    return one_hot
 
 
 if __name__ == '__main__':
