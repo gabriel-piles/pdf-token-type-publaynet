@@ -41,7 +41,7 @@ def save_hyperparameters(model_configuration, f1, content_path):
 
 def objective_token_type(trial: optuna.trial.Trial):
     start = time.time()
-    model_configuration = get_model_configuration(trial)
+    model_configuration = get_model_configuration(trial, is_segmentation=False)
 
     print(f"Start try of hyperparams at {time.localtime().tm_hour}:{time.localtime().tm_min}")
     print('\t'.join([str(x) for x in model_configuration.dict().keys()]))
@@ -69,10 +69,6 @@ def set_segmentation_predictions(model_configuration: ModelConfiguration, chunk:
     pdf_name_labels = get_pdf_name_labels('train', from_document_count=10000 * chunk, to_document_count=10000*(chunk + 1))
     test_pdf_features = [load_pdf_feature('train', x) for x in pdf_name_labels if load_pdf_feature('train', x)]
 
-    print("Predicting token types for", len(test_pdf_features), "pdfs")
-    trainer = TokenTypeTrainer(test_pdf_features, ModelConfiguration())
-    trainer.set_token_types(TOKEN_TYPE_MODEL_PATH)
-
     print("Predicting segmentation for", len(test_pdf_features), "pdfs")
     trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
     segments: list[PdfSegment] = trainer.get_pdf_segments(SEGMENTATION_MODEL_PATH)
@@ -92,15 +88,15 @@ def set_segmentation_predictions(model_configuration: ModelConfiguration, chunk:
 
 def objective_segmentation(trial: optuna.trial.Trial):
     start = time.time()
-    model_configuration = get_model_configuration(trial)
+    model_configuration = get_model_configuration(trial, is_segmentation=True)
 
     print(f"Start try of hyperparams at {time.localtime().tm_hour}:{time.localtime().tm_min}")
     print('\t'.join([str(x) for x in model_configuration.dict().keys()]))
     print('\t'.join([str(x) for x in model_configuration.dict().values()]))
 
-    train(model_configuration, SEGMENTATION_DATA_PATH, SEGMENTATION_MODEL_PATH, 3)
+    train(model_configuration, SEGMENTATION_DATA_PATH, SEGMENTATION_MODEL_PATH, 7)
 
-    test_chunk = 3
+    test_chunk = 8
     set_segmentation_predictions(model_configuration, test_chunk)
 
     coco_score = map_score(truth_path=f"data/publaynet/train_chunk_{test_chunk}.json", prediction_path=PREDICTIONS_PATH)

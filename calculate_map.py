@@ -53,6 +53,7 @@ def get_one_annotation(index, image_id, segment: PdfSegment):
     return {'segmentation': [],
             'area': 1,
             'iscrowd': 0,
+            'score': 1,
             'image_id': image_id,
             'bbox': [segment.bounding_box.left, segment.bounding_box.top, segment.bounding_box.width,
                      segment.bounding_box.height],
@@ -221,10 +222,12 @@ def learn_coco_format():
 
 
 def create_coco_sub_file():
+    chunk = 8
+
+    pdf_name_labels = get_pdf_name_labels('train', from_document_count=10000 * chunk, to_document_count=10000*(chunk + 1))
+    pdfs_features = [load_pdf_feature('train', x) for x in pdf_name_labels if load_pdf_feature('train', x)]
+
     image_name_image_id = get_image_name_image_id("train")
-    chunk = 3
-    pdfs_features: list[PdfFeatures] = load_labeled_data(split="train", from_document_count=chunk * 10000,
-                                                         to_document_count=(chunk + 1) * 10000)
     image_ids = {image_name_image_id[p.file_name] for p in pdfs_features}
 
     ground_truth = json.loads(Path("data/publaynet/train.json").read_text())
