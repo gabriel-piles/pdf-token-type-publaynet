@@ -10,15 +10,13 @@ from paragraph_extraction_trainer.PdfParagraphTokens import PdfParagraphTokens
 from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION, config_json
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 
-from get_data import get_segmentation_labeled_data
+from get_data import get_segmentation_labeled_data, balance_data
 
 import lightgbm as lgb
 
-MAX_DOCUMENTS = 10000
+from train import train
 
-model_configuration = ModelConfiguration(**config_json)
-model_configuration.num_boost_round = 200
-model_configuration.num_leaves = 100
+MAX_DOCUMENTS = 10000
 
 segmentation_training_data_path = join("data", "training_data", "segmentation", "train")
 SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "segmentation.model")
@@ -34,31 +32,34 @@ def loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list: list[PdfParagraphTokens
             yield pdf_paragraph_tokens, page.tokens[-1], page.tokens[-1]
 
 
-
 def train_segmentation():
+    configuration_dict = dict()
+    configuration_dict["context_size"] = 1
+    configuration_dict["num_boost_round"] = 331
+    configuration_dict["num_leaves"] = 326
+    configuration_dict["bagging_fraction"] = 0.8741546573792001
+    configuration_dict["lambda_l1"] = 3.741871910299135e-07
+    configuration_dict["lambda_l2"] = 3.394743918196975e-07
+    configuration_dict["feature_fraction"] = 0.17453493249431365
+    configuration_dict["bagging_freq"] = 9
+    configuration_dict["min_data_in_leaf"] = 70
+    configuration_dict["feature_pre_filter"] = False
+    configuration_dict["boosting_type"] = "gbdt"
+    configuration_dict["objective"] = "multiclass"
+    configuration_dict["metric"] = "multi_logloss"
+    configuration_dict["learning_rate"] = 0.1
+    configuration_dict["seed"] = 22
+    configuration_dict["num_class"] = 2
+    configuration_dict["verbose"] = -1
+    configuration_dict["deterministic"] = False
+    configuration_dict["resume_training"] = False
 
-    print(f"Getting model input")
+    model_configuration = ModelConfiguration(**configuration_dict)
 
-    labels = np.array([])
-    x_train = None
-
-    for folder_name in list(listdir(segmentation_training_data_path)):
-        if x_train is None:
-            x_train = np.load(join(segmentation_training_data_path, folder_name, "x.npy"))
-        else:
-            x_train = np.concatenate((x_train, np.load(join(segmentation_training_data_path, folder_name, "x.npy"))), axis=0)
-
-        labels = np.concatenate((labels, np.load(join(segmentation_training_data_path, folder_name, "y.npy"))), axis=0)
-
-    x_train, labels = balance_data(x_train, labels)
-    lgb_train = lgb.Dataset(x_train, labels)
-    print(f"Training")
-    print(str(x_train.shape))
-    gbm = lgb.train(model_configuration.dict(), lgb_train)
-
-    print(f"Saving")
-    Path(SEGMENTATION_MODEL_PATH).parent.mkdir(exist_ok=True)
-    gbm.save_model(SEGMENTATION_MODEL_PATH, num_iteration=gbm.best_iteration)
+    train(model_configuration=model_configuration,
+          training_data_path="data/training_data/segmentation/train",
+          model_path=SEGMENTATION_MODEL_PATH,
+          chunks_count=3)
 
 
 def cache_segmentation_training_data():
@@ -97,5 +98,5 @@ def cache_validation_data():
 if __name__ == '__main__':
     print("start")
     start = time()
-    cache_segmentation_training_data()
+    train_segmentation()
     print("finished in", int(time() - start), "seconds")
