@@ -42,7 +42,6 @@ configuration_dict["resume_training"] = False
 model_configuration = ModelConfiguration(**configuration_dict)
 
 
-
 def loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list: list[PdfParagraphTokens]):
     for pdf_paragraph_tokens in pdf_paragraph_tokens_list:
         for page in pdf_paragraph_tokens.pdf_features.pages:

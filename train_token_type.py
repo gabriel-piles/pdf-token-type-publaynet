@@ -41,7 +41,7 @@ def train_token_type():
     train(model_configuration=model_configuration,
           training_data_path="data/training_data/token_type/train",
           model_path=TOKEN_TYPE_MODEL_PATH,
-          chunks_count=3)
+          chunks_count=33)
 
 
 def cache_token_type_training_data():
@@ -79,6 +79,6 @@ if __name__ == "__main__":
     start = time()
     print("train_token_type")
 
-    cache_token_type_training_data()
+    train_token_type()
     print("finished in", int(time() - start), "seconds")
 
