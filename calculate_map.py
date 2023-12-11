@@ -222,7 +222,7 @@ def learn_coco_format():
 
 
 def create_coco_sub_file():
-    chunk = 8
+    chunk = 33
 
     pdf_name_labels = get_pdf_name_labels('train', from_document_count=10000 * chunk, to_document_count=10000*(chunk + 1))
     pdfs_features = [load_pdf_feature('train', x) for x in pdf_name_labels if load_pdf_feature('train', x)]

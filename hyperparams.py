@@ -65,13 +65,13 @@ def objective_token_type(trial: optuna.trial.Trial):
     return f1
 
 
-def set_segmentation_predictions(model_configuration: ModelConfiguration, chunk: int):
+def set_segmentation_predictions(model_configuration: ModelConfiguration, segmentation_model_path: str, chunk: int):
     pdf_name_labels = get_pdf_name_labels('train', from_document_count=10000 * chunk, to_document_count=10000*(chunk + 1))
     test_pdf_features = [load_pdf_feature('train', x) for x in pdf_name_labels if load_pdf_feature('train', x)]
 
     print("Predicting segmentation for", len(test_pdf_features), "pdfs")
     trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
-    segments: list[PdfSegment] = trainer.get_pdf_segments(SEGMENTATION_MODEL_PATH)
+    segments: list[PdfSegment] = trainer.get_pdf_segments(segmentation_model_path)
 
     segments = [s for s in segments if s.segment_type in token_types_to_publaynet_types.keys()]
 
@@ -97,7 +97,7 @@ def objective_segmentation(trial: optuna.trial.Trial):
     train(model_configuration, SEGMENTATION_DATA_PATH, SEGMENTATION_MODEL_PATH, 7)
 
     test_chunk = 8
-    set_segmentation_predictions(model_configuration, test_chunk)
+    set_segmentation_predictions(model_configuration, SEGMENTATION_MODEL_PATH,  test_chunk)
 
     coco_score = map_score(truth_path=f"data/publaynet/train_chunk_{test_chunk}.json", prediction_path=PREDICTIONS_PATH)
     save_hyperparameters(model_configuration, coco_score, "results/segmentation_hyperparameters.txt")
