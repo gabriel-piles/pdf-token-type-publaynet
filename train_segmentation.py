@@ -20,14 +20,14 @@ SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "segmentation.mod
 
 configuration_dict = dict()
 configuration_dict["context_size"] = 1
-configuration_dict["num_boost_round"] = 331
-configuration_dict["num_leaves"] = 326
+configuration_dict["num_boost_round"] = 500
+configuration_dict["num_leaves"] = 500
 configuration_dict["bagging_fraction"] = 0.8741546573792001
 configuration_dict["lambda_l1"] = 3.741871910299135e-07
 configuration_dict["lambda_l2"] = 3.394743918196975e-07
 configuration_dict["feature_fraction"] = 0.17453493249431365
 configuration_dict["bagging_freq"] = 9
-configuration_dict["min_data_in_leaf"] = 70
+configuration_dict["min_data_in_leaf"] = 35
 configuration_dict["feature_pre_filter"] = False
 configuration_dict["boosting_type"] = "gbdt"
 configuration_dict["objective"] = "multiclass"
@@ -100,11 +100,12 @@ def evaluate_results():
 
     coco_score = map_score(truth_path=f"data/publaynet/train_chunk_{test_chunk}.json", prediction_path=PREDICTIONS_PATH)
 
+    print("coco_score")
     print(coco_score)
 
 
 if __name__ == '__main__':
     print("start")
     start = time()
-    evaluate_results()
+    train_segmentation()
     print("finished in", int(time() - start), "seconds")

@@ -11,7 +11,6 @@ import optuna
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
-from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from sklearn.metrics import f1_score
 
 from calculate_map import token_types_to_publaynet_types, get_image_name_image_id, get_one_annotation, map_score
