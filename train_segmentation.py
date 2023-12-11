@@ -106,5 +106,5 @@ def evaluate_results():
 if __name__ == '__main__':
     print("start")
     start = time()
-    train_segmentation()
+    evaluate_results()
     print("finished in", int(time() - start), "seconds")

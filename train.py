@@ -20,12 +20,14 @@ def train(model_configuration: ModelConfiguration, training_data_path: Path | st
     for folder_name in sorted(list(listdir(training_data_path))[:chunks_count-1]):
         if x_train is None:
             x_train = np.load(join(training_data_path, folder_name, "x.npy"))
-        else:
-            x_train = np.concatenate((x_train, np.load(join(training_data_path, folder_name, "x.npy"))), axis=0)
+            labels = np.concatenate((labels, np.load(join(training_data_path, folder_name, "y.npy"))), axis=0)
+            x_train, labels = balance_data(x_train, labels)
+            continue
 
-        labels = np.concatenate((labels, np.load(join(training_data_path, folder_name, "y.npy"))), axis=0)
-
-    x_train, labels = balance_data(x_train, labels)
+        x_train_chunk, labels_chunk = balance_data(np.load(join(training_data_path, folder_name, "x.npy")),
+                                                   np.load(join(training_data_path, folder_name, "y.npy")))
+        x_train = np.concatenate((x_train, x_train_chunk), axis=0)
+        labels = np.concatenate((labels, labels_chunk), axis=0)
 
     lgb_train = lgb.Dataset(x_train, labels)
     x_val = np.load(join(training_data_path, sorted(list(listdir(training_data_path)))[chunks_count-1], "x.npy"))
