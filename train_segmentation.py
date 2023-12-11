@@ -54,8 +54,6 @@ def loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list: list[PdfParagraphTokens
 
 
 def train_segmentation():
-
-
     train(model_configuration=model_configuration,
           training_data_path="data/training_data/segmentation/train",
           model_path=SEGMENTATION_MODEL_PATH,
@@ -109,5 +107,5 @@ def evaluate_results():
 if __name__ == '__main__':
     print("start")
     start = time()
-    evaluate_results()
+    train_segmentation()
     print("finished in", int(time() - start), "seconds")

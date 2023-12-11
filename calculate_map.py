@@ -9,8 +9,6 @@ from time import time
 import numpy as np
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
-from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
-from pdf_features.PdfFeatures import PdfFeatures
 from pdf_features.Rectangle import Rectangle
 from pdf_token_type_labels.Label import Label
 from pdf_token_type_labels.TaskMistakes import TaskMistakes
@@ -20,9 +18,8 @@ from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-from get_data import get_pdf_name_labels, load_pdf_feature, load_labeled_data, PDF_LABELED_DATA_ROOT_PATH, balance_data
+from get_data import get_pdf_name_labels, load_pdf_feature, PDF_LABELED_DATA_ROOT_PATH, balance_data
 from train_token_type import TOKEN_TYPE_MODEL_PATH
-from train_segmentation import SEGMENTATION_MODEL_PATH
 
 token_types_to_publaynet_types = {
     TokenType.TEXT: 1,
@@ -61,7 +58,7 @@ def get_one_annotation(index, image_id, segment: PdfSegment):
             'id': index}
 
 
-def get_predictions():
+def get_predictions(model_configuration: ModelConfiguration, segmentation_model_path: str):
     pdf_name_labels = get_pdf_name_labels('dev')
     test_pdf_features = [load_pdf_feature('dev', x) for x in pdf_name_labels if load_pdf_feature('dev', x)]
 
@@ -70,8 +67,8 @@ def get_predictions():
     trainer.set_token_types(TOKEN_TYPE_MODEL_PATH)
 
     print("Predicting segmentation for", len(test_pdf_features), "pdfs")
-    trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=MODEL_CONFIGURATION)
-    segments: list[PdfSegment] = trainer.get_pdf_segments(SEGMENTATION_MODEL_PATH)
+    trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
+    segments: list[PdfSegment] = trainer.get_pdf_segments(segmentation_model_path)
 
     segments = [s for s in segments if s.segment_type in token_types_to_publaynet_types.keys()]
 
