@@ -1,8 +1,5 @@
 import json
-import os
-import shutil
 from collections import Counter
-from os.path import join
 from pathlib import Path
 from time import time
 
@@ -11,15 +8,13 @@ from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtr
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
 from pdf_features.Rectangle import Rectangle
 from pdf_token_type_labels.Label import Label
-from pdf_token_type_labels.TaskMistakes import TaskMistakes
 from pdf_token_type_labels.TokenType import TokenType
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-from get_data import get_pdf_name_labels, load_pdf_feature, PDF_LABELED_DATA_ROOT_PATH, balance_data
-from train_token_type import TOKEN_TYPE_MODEL_PATH
+from get_data import get_pdf_name_labels, load_pdf_feature, balance_data
 
 token_types_to_publaynet_types = {
     TokenType.TEXT: 1,
@@ -58,17 +53,63 @@ def get_one_annotation(index, image_id, segment: PdfSegment):
             'id': index}
 
 
-def get_predictions(model_configuration: ModelConfiguration, segmentation_model_path: str):
+def get_predictions():
     pdf_name_labels = get_pdf_name_labels('dev')
     test_pdf_features = [load_pdf_feature('dev', x) for x in pdf_name_labels if load_pdf_feature('dev', x)]
 
     print("Predicting token types for", len(test_pdf_features), "pdfs")
-    trainer = TokenTypeTrainer(test_pdf_features, ModelConfiguration())
-    trainer.set_token_types(TOKEN_TYPE_MODEL_PATH)
+    configuration_dict = dict()
+    configuration_dict["context_size"] = 4
+    configuration_dict["num_boost_round"] = 652
+    configuration_dict["num_leaves"] = 427
+    configuration_dict["bagging_fraction"] = 0.538576362137786
+    configuration_dict["lambda_l1"] = 0.0005757631630210714
+    configuration_dict["lambda_l2"] = 0.014421883568195633
+    configuration_dict["feature_fraction"] = 0.5093595305684682
+    configuration_dict["bagging_freq"] = 4
+    configuration_dict["min_data_in_leaf"] = 91
+    configuration_dict["feature_pre_filter"] = False
+    configuration_dict["boosting_type"] = "gbdt"
+    configuration_dict["objective"] = "multiclass"
+    configuration_dict["metric"] = "multi_logloss"
+    configuration_dict["learning_rate"] = 0.1
+    configuration_dict["seed"] = 22
+    configuration_dict["num_class"] = 13
+    configuration_dict["verbose"] = -1
+    configuration_dict["deterministic"] = False
+    configuration_dict["resume_training"] = False
+
+    model_configuration = ModelConfiguration(**configuration_dict)
+    trainer = TokenTypeTrainer(test_pdf_features, model_configuration)
+    trainer.set_token_types("model/token_type_full_data.model")
 
     print("Predicting segmentation for", len(test_pdf_features), "pdfs")
+
+    configuration_dict = dict()
+    configuration_dict["context_size"] = 1
+    configuration_dict["num_boost_round"] = 500
+    configuration_dict["num_leaves"] = 500
+    configuration_dict["bagging_fraction"] = 0.8741546573792001
+    configuration_dict["lambda_l1"] = 3.741871910299135e-07
+    configuration_dict["lambda_l2"] = 3.394743918196975e-07
+    configuration_dict["feature_fraction"] = 0.17453493249431365
+    configuration_dict["bagging_freq"] = 9
+    configuration_dict["min_data_in_leaf"] = 35
+    configuration_dict["feature_pre_filter"] = False
+    configuration_dict["boosting_type"] = "gbdt"
+    configuration_dict["objective"] = "multiclass"
+    configuration_dict["metric"] = "multi_logloss"
+    configuration_dict["learning_rate"] = 0.1
+    configuration_dict["seed"] = 22
+    configuration_dict["num_class"] = 2
+    configuration_dict["verbose"] = -1
+    configuration_dict["deterministic"] = False
+    configuration_dict["resume_training"] = False
+
+    model_configuration = ModelConfiguration(**configuration_dict)
+
     trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
-    segments: list[PdfSegment] = trainer.get_pdf_segments(segmentation_model_path)
+    segments: list[PdfSegment] = trainer.get_pdf_segments("model/segmentation_full_data_4.model")
 
     segments = [s for s in segments if s.segment_type in token_types_to_publaynet_types.keys()]
 
@@ -130,17 +171,6 @@ def map_test():
     print(average_precision_per_category)
 
 
-def move_bboxes(prediction_path: str):
-    for moving_coordinates in range(1, 3, 1):
-        prediction_base = json.loads(Path(prediction_path).read_text())
-        for annotation in prediction_base['annotations']:
-            annotation['bbox'] = [annotation['bbox'][0] - moving_coordinates, annotation['bbox'][1] - moving_coordinates,
-                                  annotation['bbox'][2], annotation['bbox'][3] - moving_coordinates]
-
-        Path(f"data/publaynet/predictions_moving_coordinates_{moving_coordinates}.json").write_text(
-            json.dumps(prediction_base))
-
-
 def map_score(truth_path: str, prediction_path: str):
     ground_truth = COCO(truth_path)
     predictions = COCO(prediction_path)
@@ -161,49 +191,10 @@ def map_score(truth_path: str, prediction_path: str):
     print('\t'.join(["overall"] + [categories[x].value.lower() for x in average_precision_per_category.keys()]))
     print('\t'.join([str(overall)] + [str(round(x, 3)) for x in average_precision_per_category.values()]))
 
-    return sum([x for x in list(average_precision_per_category.values())[:4]]) / 4
-
-
-def save_mistakes(truth_path: str, predictions_path: str):
-    truth_coco_format = json.loads(Path(truth_path).read_text())
-    predictions_format = json.loads(Path(predictions_path).read_text())
-
-    for image in truth_coco_format['images'][:10]:
-        copy_pdf_to_mistakes(image)
-        task_mistakes = TaskMistakes(PDF_LABELED_DATA_ROOT_PATH, "PubLayNet_LightGBM", image['file_name'])
-
-        annotation_truth_for_image = [x for x in truth_coco_format['annotations'] if x['image_id'] == image['id']]
-        annotation_predictions_for_image = [x for x in predictions_format['annotations'] if x['image_id'] == image['id']]
-
-        for annotation in annotation_truth_for_image:
-            annotation_rectangle = get_rectangle(annotation)
-            prediction_annotations = [x for x in annotation_predictions_for_image if
-                                     get_rectangle(x).get_intersection_percentage(annotation_rectangle) > 0]
-
-            metadata = categories[annotation['category_id']].value.lower()
-
-            if not prediction_annotations:
-                task_mistakes.add(1, annotation_rectangle, 1, 0, metadata + "pred: void")
-                continue
-
-            if prediction_annotations[0]['category_id'] == annotation['category_id']:
-                intersection = annotation_rectangle.get_intersection_percentage(get_rectangle(prediction_annotations[0]))
-                task_mistakes.add(1, annotation_rectangle, 1, 1, metadata)
-                task_mistakes.add(1, get_rectangle(prediction_annotations[0]), 1, 1, f"{intersection:.3}")
-                continue
-
-            task_mistakes.add(1, annotation_rectangle, 0, 1, metadata)
-            metadata = "pred: " + categories[prediction_annotations[0]['category_id']].value.lower()
-            task_mistakes.add(1, get_rectangle(prediction_annotations[0]), 1, 0, metadata)
-
-        task_mistakes.save()
-
-
-def copy_pdf_to_mistakes(image):
-    origin = join("/home/gabo/projects/pdf-token-type-publaynet/data/pdfs/dev", image['file_name'].replace('.jpg', '.pdf'))
-    to = join("/home/gabo/projects/pdf-labeled-data/pdfs", image['file_name'], "document.pdf")
-    os.makedirs(Path(to).parent, exist_ok=True)
-    shutil.copyfile(origin, to)
+    coco_score = sum([x for x in list(average_precision_per_category.values())[:4]]) / 4
+    print("coco_score")
+    print(coco_score)
+    return coco_score
 
 
 def get_rectangle(annotation):
@@ -263,8 +254,8 @@ def check_unbalanced_data():
 if __name__ == '__main__':
     print("start")
     start = time()
-    # check_unbalanced_data()
-    # map_score(truth_path="data/publaynet/val.json")
-    # save_mistakes(truth_path="data/publaynet/val.json", predictions_path="data/publaynet/predictions_moving_coordinates_1.json")
-    create_coco_sub_file()
+    print("predictions")
+    # get_predictions()
+    # map_score(truth_path="data/publaynet/train_chunk_33.json", prediction_path="data/publaynet/predictions_chunk_33.json")
+    map_score(truth_path="data/publaynet/val.json", prediction_path="data/publaynet/predictions.json")
     print("finished in", int(time() - start), "seconds")

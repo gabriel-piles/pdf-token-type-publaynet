@@ -130,5 +130,31 @@ def optuna_automatic_tuning(objective: Callable):
     study.optimize(objective, n_trials=200, gc_after_trial=True)
 
 
+def evaluate_token_type():
+    scores = dict()
+    chunks_paths = sorted(list(listdir(TOKEN_TYPE_DATA_PATH)))
+
+    x_test = np.load(join(TOKEN_TYPE_DATA_PATH, chunks_paths[7], "x.npy"))
+    y_test = np.load(join(TOKEN_TYPE_DATA_PATH, chunks_paths[7], "y.npy"))
+
+    for model_name in ["token_type_full_data.model"]:
+        start = time.time()
+        print(model_name)
+
+        model = lgb.Booster(model_file=join("model", model_name))
+
+        y_pred_scores = model.predict(x_test, num_iteration=model.best_iteration)
+        y_prediction_categories = [np.argmax(prediction_scores) for prediction_scores in y_pred_scores]
+
+        f1 = f1_score(y_test, y_prediction_categories, average="macro")
+        scores[model_name] = f1
+        print(f1)
+        print("finished in", round(time.time() - start, 1), "seconds")
+
+    for model_name, score in scores.items():
+        print(model_name, str(round(score, 4)))
+
+
 if __name__ == '__main__':
-    optuna_automatic_tuning(objective_segmentation)
+    # optuna_automatic_tuning(objective_segmentation)
+    evaluate_token_type()

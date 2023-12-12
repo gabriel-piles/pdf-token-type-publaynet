@@ -1,4 +1,3 @@
-
 from os.path import join
 from pathlib import Path
 from time import time
@@ -10,13 +9,12 @@ from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from calculate_map import map_score
 from get_data import get_segmentation_labeled_data
 
-
 from hyperparams import set_segmentation_predictions, PREDICTIONS_PATH
 from train import train
 
 MAX_DOCUMENTS = 10000
 
-SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "segmentation.model")
+SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "segmentation_full_data_4.model")
 
 configuration_dict = dict()
 configuration_dict["context_size"] = 1
@@ -80,32 +78,44 @@ def cache_segmentation_training_data():
 
 
 def cache_validation_data():
-    pdf_paragraph_tokens_list = get_segmentation_labeled_data(split="dev", from_document_count=0, to_document_count=999999999)
-    
+    pdf_paragraph_tokens_list = get_segmentation_labeled_data(split="dev", from_document_count=0,
+                                                              to_document_count=999999999)
+
     pdf_features_list = [pdf_paragraph_tokens.pdf_features for pdf_paragraph_tokens in pdf_paragraph_tokens_list]
     trainer = ParagraphExtractorTrainer(pdfs_features=pdf_features_list, model_configuration=MODEL_CONFIGURATION)
 
     labels = []
     for pdf_paragraph_tokens, token, next_token in loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list):
         labels.append(pdf_paragraph_tokens.check_same_paragraph(token, next_token))
-        
+
     trainer.save_training_data(join("data", "training_data", "segmentation", "val", "chunk_0"), labels)
 
 
 def evaluate_results():
     test_chunk = 33
-    set_segmentation_predictions(model_configuration=model_configuration,
-                                 segmentation_model_path=SEGMENTATION_MODEL_PATH,
-                                 chunk=test_chunk)
+    scores = dict()
+    for model_name in ["segmentation.model",
+                       "segmentation_full_data.model",
+                       "segmentation_full_data_2.model",
+                       "segmentation_full_data_4.model",
+                       "segmentation_full_data_5.model",
+                       "segmentation_full_data_early_stopping.model",
+                       "segmentation_hyperparams.model"]:
+        path = join(Path(__file__).parent, "model", model_name)
+        set_segmentation_predictions(model_configuration=model_configuration,
+                                     segmentation_model_path=path,
+                                     chunk=test_chunk)
 
-    coco_score = map_score(truth_path=f"data/publaynet/train_chunk_{test_chunk}.json", prediction_path=PREDICTIONS_PATH)
+        coco_score = map_score(truth_path=f"data/publaynet/train_chunk_{test_chunk}.json", prediction_path=PREDICTIONS_PATH)
+        scores[model_name] = coco_score
+        print(model_name)
+        print(coco_score)
 
-    print("coco_score")
-    print(coco_score)
+    print(scores)
 
 
 if __name__ == '__main__':
     print("start")
     start = time()
-    train_segmentation()
+    evaluate_results()
     print("finished in", int(time() - start), "seconds")
