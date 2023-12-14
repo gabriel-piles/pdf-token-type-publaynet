@@ -210,7 +210,7 @@ def learn_coco_format():
 
 
 def create_coco_sub_file():
-    chunk = 33
+    chunk = 32
 
     pdf_name_labels = get_pdf_name_labels('train', from_document_count=10000 * chunk, to_document_count=10000*(chunk + 1))
     pdfs_features = [load_pdf_feature('train', x) for x in pdf_name_labels if load_pdf_feature('train', x)]
@@ -255,7 +255,8 @@ if __name__ == '__main__':
     print("start")
     start = time()
     print("predictions")
+    create_coco_sub_file()
     # get_predictions()
     # map_score(truth_path="data/publaynet/train_chunk_33.json", prediction_path="data/publaynet/predictions_chunk_33.json")
-    map_score(truth_path="data/publaynet/val.json", prediction_path="data/publaynet/predictions.json")
+    # map_score(truth_path="data/publaynet/val.json", prediction_path="data/publaynet/predictions.json")
     print("finished in", int(time() - start), "seconds")

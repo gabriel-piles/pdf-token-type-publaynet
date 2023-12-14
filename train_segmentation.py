@@ -1,25 +1,28 @@
+from os import listdir
 from os.path import join
 from pathlib import Path
 from time import time
+
+import numpy as np
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfParagraphTokens import PdfParagraphTokens
 from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 
 from calculate_map import map_score
-from get_data import get_segmentation_labeled_data
+from get_data import get_segmentation_labeled_data, balance_data
 
 from hyperparams import set_segmentation_predictions, PREDICTIONS_PATH
 from train import train
 
 MAX_DOCUMENTS = 10000
 
-SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "segmentation_full_data_4.model")
+SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "test_performance_over_time.model")
 
 configuration_dict = dict()
 configuration_dict["context_size"] = 1
-configuration_dict["num_boost_round"] = 500
-configuration_dict["num_leaves"] = 500
+configuration_dict["num_boost_round"] = 331
+configuration_dict["num_leaves"] = 326
 configuration_dict["bagging_fraction"] = 0.8741546573792001
 configuration_dict["lambda_l1"] = 3.741871910299135e-07
 configuration_dict["lambda_l2"] = 3.394743918196975e-07
@@ -50,11 +53,11 @@ def loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list: list[PdfParagraphTokens
             yield pdf_paragraph_tokens, page.tokens[-1], page.tokens[-1]
 
 
-def train_segmentation():
+def train_segmentation(chunks_count = 33):
     train(model_configuration=model_configuration,
           training_data_path="data/training_data/segmentation/train",
           model_path=SEGMENTATION_MODEL_PATH,
-          chunks_count=33)
+          chunks_count=chunks_count)
 
 
 def cache_segmentation_training_data():
@@ -91,31 +94,63 @@ def cache_validation_data():
     trainer.save_training_data(join("data", "training_data", "segmentation", "val", "chunk_0"), labels)
 
 
-def evaluate_results():
-    test_chunk = 33
-    scores = dict()
-    for model_name in ["segmentation.model",
-                       "segmentation_full_data.model",
-                       "segmentation_full_data_2.model",
-                       "segmentation_full_data_4.model",
-                       "segmentation_full_data_5.model",
-                       "segmentation_full_data_early_stopping.model",
-                       "segmentation_hyperparams.model"]:
-        path = join(Path(__file__).parent, "model", model_name)
-        set_segmentation_predictions(model_configuration=model_configuration,
-                                     segmentation_model_path=path,
-                                     chunk=test_chunk)
+def evaluate_results(test_chunk= 33):
+    set_segmentation_predictions(model_configuration=model_configuration,
+                                 segmentation_model_path=SEGMENTATION_MODEL_PATH,
+                                 chunk=test_chunk)
 
-        coco_score = map_score(truth_path=f"data/publaynet/train_chunk_{test_chunk}.json", prediction_path=PREDICTIONS_PATH)
-        scores[model_name] = coco_score
-        print(model_name)
-        print(coco_score)
+    coco_score = map_score(truth_path=f"data/publaynet/train_chunk_{test_chunk}.json", prediction_path=PREDICTIONS_PATH)
+    return coco_score
 
-    print(scores)
+
+def load_chunks():
+    training_data_path = "data/training_data/token_type/train"
+    # shapes = list()
+    # for chunk in range(7):
+    #     data = np.load(f"{training_data_path}/chunk_{chunk}/x.npy")
+    #     shapes.append(data.shape[0])
+    #     print(data.shape)
+
+    x_train = None
+    labels = np.array([])
+    for folder_name in sorted(list(listdir(training_data_path))[:4]):
+
+        if x_train is None:
+            x_train = np.load(join(training_data_path, folder_name, "x.npy"))
+            labels = np.concatenate((labels, np.load(join(training_data_path, folder_name, "y.npy"))), axis=0)
+            x_train, labels = balance_data(x_train, labels)
+            print("finished in", round(time() - start, 1), "seconds")
+            continue
+
+        x_train_chunk, labels_chunk = balance_data(np.load(join(training_data_path, folder_name, "x.npy")),
+                                                   np.load(join(training_data_path, folder_name, "y.npy")))
+
+        labels = np.concatenate((labels, labels_chunk), axis=0)
+
+        start_loop = time()
+        x_train = np.concatenate((x_train, x_train_chunk), axis=0)
+
+        # rows = x_train_chunk.shape[0]
+        # old_rows = x_train.shape[0]
+        #
+        # X = np.zeros((rows + old_rows, 400))
+        # X[:old_rows] = x_train
+        # X[old_rows:] = x_train_chunk
+        # x_train = X
+        print("finished in", round(time() - start_loop, 1), "seconds")
+
+
+def performance_over_time():
+    for i in range(3):
+        train_segmentation(i + 2)
+        map = evaluate_results(32)
+        results_path = Path("results/segmentation_performance_over_size.txt")
+        results = results_path.read_text()
+        results_path.write_text(f"{results}\n{i}\t{map}")
 
 
 if __name__ == '__main__':
     print("start")
     start = time()
-    evaluate_results()
+    performance_over_time()
     print("finished in", int(time() - start), "seconds")
