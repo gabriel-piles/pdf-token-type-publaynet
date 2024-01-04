@@ -45,7 +45,7 @@ def train_token_type():
 
 
 def cache_token_type_training_data():
-    for i in range(8):
+    for i in range(8, 35):
         start_cache = time()
         print(f"Caching chunk {i}")
         train_pdf_features = load_labeled_data(split="train", from_document_count=MAX_DOCUMENTS * i,
@@ -79,6 +79,6 @@ if __name__ == "__main__":
     start = time()
     print("train_token_type")
 
-    train_token_type()
+    cache_token_type_training_data()
     print("finished in", int(time() - start), "seconds")
 

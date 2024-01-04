@@ -174,6 +174,7 @@ def map_test():
 def map_score(truth_path: str, prediction_path: str):
     ground_truth = COCO(truth_path)
     predictions = COCO(prediction_path)
+
     average_precision_per_category = {}
     for i in range(1, 6):
         print("Category: ", i)
@@ -251,12 +252,24 @@ def check_unbalanced_data():
     print(labels.shape)
 
 
+def annotation_to_predictions_coco():
+    predictions_dict = json.loads(Path("vgt_result/inference/coco_instances_results.json").read_text())
+    truth_dict = json.loads(Path("data/publaynet/val.json").read_text())
+
+    for i, prediction_ann in enumerate(predictions_dict):
+        prediction_ann['id'] = i
+        prediction_ann['area'] = 1
+    prediction = {"images": truth_dict["images"], "annotations": predictions_dict, "categories": truth_dict["categories"]}
+    Path("vgt_result/inference/coco_predictions.json").write_text(json.dumps(prediction))
+
+
 if __name__ == '__main__':
     print("start")
     start = time()
     print("predictions")
-    create_coco_sub_file()
+    # create_coco_sub_file()
     # get_predictions()
     # map_score(truth_path="data/publaynet/train_chunk_33.json", prediction_path="data/publaynet/predictions_chunk_33.json")
-    # map_score(truth_path="data/publaynet/val.json", prediction_path="data/publaynet/predictions.json")
+    map_score(truth_path="data/publaynet/val.json", prediction_path="vgt_result/inference/coco_predictions.json")
+
     print("finished in", int(time() - start), "seconds")

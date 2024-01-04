@@ -1,5 +1,5 @@
-git+https://github.com/huridocs/pdf-tokens-type-labeler@6524df499413e661866baf001f6f3760c3af4446
-git+https://github.com/huridocs/pdf_paragraphs_extraction@3136c36c27baf1152cee64e6a283d74d4115c6ad
+git+https://github.com/huridocs/pdf-tokens-type-labeler@d237b570f1f3d09dbbd16d0868b7fd9931b327d6
+git+https://github.com/huridocs/pdf_paragraphs_extraction@9765c33f32139d6043e67d30b30fd2ba10f4da1d
 mapcalc
 pycocotools~=2.0.7
 lightgbm~=4.1.0

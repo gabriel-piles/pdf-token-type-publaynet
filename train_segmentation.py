@@ -61,7 +61,7 @@ def train_segmentation(chunks_count = 33):
 
 
 def cache_segmentation_training_data():
-    for i in range(8):
+    for i in range(35):
         start_cache = time()
         print(f"Caching chunk {i}")
         pdf_paragraph_tokens_list = get_segmentation_labeled_data(split="train", from_document_count=MAX_DOCUMENTS * i,
@@ -71,7 +71,9 @@ def cache_segmentation_training_data():
             continue
 
         pdf_features_list = [pdf_paragraph_tokens.pdf_features for pdf_paragraph_tokens in pdf_paragraph_tokens_list]
-        trainer = ParagraphExtractorTrainer(pdfs_features=pdf_features_list, model_configuration=MODEL_CONFIGURATION)
+        model_configuration = MODEL_CONFIGURATION
+        model_configuration.context_size = 3
+        trainer = ParagraphExtractorTrainer(pdfs_features=pdf_features_list, model_configuration=model_configuration)
         labels = []
         for pdf_paragraph_tokens, token, next_token in loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list):
             labels.append(pdf_paragraph_tokens.check_same_paragraph(token, next_token))
@@ -141,7 +143,7 @@ def load_chunks():
 
 
 def performance_over_time():
-    for i in range(3):
+    for i in range(20):
         train_segmentation(i + 2)
         map = evaluate_results(32)
         results_path = Path("results/segmentation_performance_over_size.txt")
@@ -152,5 +154,5 @@ def performance_over_time():
 if __name__ == '__main__':
     print("start")
     start = time()
-    performance_over_time()
+    cache_segmentation_training_data()
     print("finished in", int(time() - start), "seconds")

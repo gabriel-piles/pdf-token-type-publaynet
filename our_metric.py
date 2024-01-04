@@ -5,6 +5,8 @@ from time import time
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfParagraphTokens import PdfParagraphTokens
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
+from pdf_token_type_labels.PageLabels import PageLabels
+from pdf_token_type_labels.PdfLabels import PdfLabels
 from pdf_token_type_labels.TaskMistakes import TaskMistakes
 from pdf_token_type_labels.TokenType import TokenType
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
@@ -160,6 +162,9 @@ def save_scores():
     score_per_category = {x: 0 for x in TokenType}
     count_per_category = {x: 0 for x in TokenType}
 
+    error_segmentation = {x: 0 for x in TokenType}
+    error_token_type = {x: 0 for x in TokenType}
+
     truth_segments_per_pdf = dict()
     prediction_segments_per_pdf = dict()
 
@@ -173,17 +178,28 @@ def save_scores():
         for truth_segment in truth_segments:
             for prediction_segment in prediction_segments_per_pdf[truth_segment.pdf_name]:
                 intersection_percentage = truth_segment.bounding_box.get_intersection_percentage(prediction_segment.bounding_box)
+
                 if truth_segment.segment_type == prediction_segment.segment_type and intersection_percentage == 100:
                     score_per_category[truth_segment.segment_type] += 1
                     break
 
+                if intersection_percentage == 100 and truth_segment.segment_type != prediction_segment.segment_type:
+                    error_token_type[truth_segment.segment_type] += 1
+                    break
+
+                error_segmentation[truth_segment.segment_type] += 1
+
             count_per_category[truth_segment.segment_type] += 1
 
-    with open(SCORE_PER_CATEGORY_PICKLE_PATH, mode="wb") as file:
-        pickle.dump(score_per_category, file)
-
-    with open(COUNT_PER_CATEGORY_PICKLE_PATH, mode="wb") as file:
-        pickle.dump(count_per_category, file)
+    print("error_segmentation")
+    print({x.value: v for x,v in error_segmentation.items() if v != 0})
+    print("error_token_type")
+    print({x.value: v for x,v in error_token_type.items() if v != 0})
+    # with open(SCORE_PER_CATEGORY_PICKLE_PATH, mode="wb") as file:
+    #     pickle.dump(score_per_category, file)
+    #
+    # with open(COUNT_PER_CATEGORY_PICKLE_PATH, mode="wb") as file:
+    #     pickle.dump(count_per_category, file)
 
 
 def print_scores():
@@ -203,10 +219,30 @@ def print_scores():
     print('Average', f"{round(sum(accuracies)/len(accuracies), 2)}%")
 
 
+def one_document_get_segmentation_labeled_data(pdf_name: str) -> list[PdfParagraphTokens]:
+    all_pdf_name_labels = get_pdf_name_labels('dev', True, 0, 99999999)
+    labels = [labels for key_pdf_name, labels in all_pdf_name_labels.items() if key_pdf_name == pdf_name][0]
+
+    pdfs_paragraphs_tokens: list[PdfParagraphTokens] = list()
+
+    pdf_feature = load_pdf_feature('dev', pdf_name)
+
+    pages = [PageLabels(number=1, labels=labels)]
+    pdf_paragraphs_tokens = PdfParagraphTokens.set_paragraphs(pdf_feature, PdfLabels(pages=pages))
+    pdfs_paragraphs_tokens.append(pdf_paragraphs_tokens)
+    # Label(top=99, left=307, width=242, height=187, label_type=3, metadata='')
+    # Label(top=281, left=312, width=182, height=10, label_type=6, metadata='')
+    #<text top="281" left="309" width="4" height="6" font="6"><i>∗</i></text>
+    return pdfs_paragraphs_tokens
+
+
 if __name__ == "__main__":
     start = time()
     print("start")
-    # save_scores()
+    # get_predictions()
     # print_scores()
-    show_mistakes()
+    # show_mistakes()
+    # pdf_features = load_pdf_feature("dev", "PMC3170864_00003")
+    segmentations = one_document_get_segmentation_labeled_data("PMC3170864_00003")
+    # test_segmentation = [x for x in segmentations if x.pdf_features.file_name == "PMC3170864_00003"]
     print("finished in", round(time() - start, 1), "seconds")
