@@ -1,0 +1,25 @@
+[12/14 22:03:25 d2.evaluation.fast_eval_api]: COCOeval_opt.accumulate() finished in 0.34 seconds.
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.962
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.981
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.975
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.513
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.867
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.979
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.547
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.961
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.972
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.628
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.903
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.989
+[12/14 22:03:25 d2.evaluation.coco_evaluation]: Evaluation results for bbox:
+|   AP   |  AP50  |  AP75  |  APs   |  APm   |  APl   |
+|:------:|:------:|:------:|:------:|:------:|:------:|
+| 96.176 | 98.102 | 97.545 | 51.299 | 86.689 | 97.932 |
+[12/14 22:03:25 d2.evaluation.coco_evaluation]: Per-category bbox AP:
+| category   | AP     | category   | AP     | category   | AP     |
+|:-----------|:-------|:-----------|:-------|:-----------|:-------|
+| text       | 94.986 | title      | 93.915 | list       | 96.727 |
+| table      | 98.090 | figure     | 97.164 |            |        |
+[12/14 22:03:25 d2.evaluation.testing]: copypaste: Task: bbox
+[12/14 22:03:25 d2.evaluation.testing]: copypaste: AP,AP50,AP75,APs,APm,APl
+[12/14 22:03:25 d2.evaluation.testing]: copypaste: 96.1763,98.1023,97.5447,51.2991,86.6893,97.9318
