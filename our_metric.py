@@ -79,7 +79,7 @@ def get_predictions():
     model_configuration = ModelConfiguration(**configuration_dict)
 
     trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
-    prediction_segments: list[PdfSegment] = trainer.get_pdf_segments("model/segmentation_full_data_4.model")
+    prediction_segments: list[PdfSegment] = trainer.get_pdf_segments("model/4_jan_2024_segmentation.model")
 
     with open(PREDICTION_SEGMENTS_PICKLE_PATH, mode="wb") as file:
         pickle.dump(prediction_segments, file)
@@ -195,11 +195,11 @@ def save_scores():
     print({x.value: v for x,v in error_segmentation.items() if v != 0})
     print("error_token_type")
     print({x.value: v for x,v in error_token_type.items() if v != 0})
-    # with open(SCORE_PER_CATEGORY_PICKLE_PATH, mode="wb") as file:
-    #     pickle.dump(score_per_category, file)
-    #
-    # with open(COUNT_PER_CATEGORY_PICKLE_PATH, mode="wb") as file:
-    #     pickle.dump(count_per_category, file)
+    with open(SCORE_PER_CATEGORY_PICKLE_PATH, mode="wb") as file:
+        pickle.dump(score_per_category, file)
+
+    with open(COUNT_PER_CATEGORY_PICKLE_PATH, mode="wb") as file:
+        pickle.dump(count_per_category, file)
 
 
 def print_scores():
@@ -240,9 +240,8 @@ if __name__ == "__main__":
     start = time()
     print("start")
     # get_predictions()
+    # get_truth_segments()
+    # save_scores()
     # print_scores()
-    # show_mistakes()
-    # pdf_features = load_pdf_feature("dev", "PMC3170864_00003")
-    segmentations = one_document_get_segmentation_labeled_data("PMC3170864_00003")
-    # test_segmentation = [x for x in segmentations if x.pdf_features.file_name == "PMC3170864_00003"]
+    show_mistakes()
     print("finished in", round(time() - start, 1), "seconds")

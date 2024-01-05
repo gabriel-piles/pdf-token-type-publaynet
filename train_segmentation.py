@@ -17,7 +17,7 @@ from train import train
 
 MAX_DOCUMENTS = 10000
 
-SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "test_performance_over_time.model")
+SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "4_jan_2024_segmentation_model.model")
 
 configuration_dict = dict()
 configuration_dict["context_size"] = 1
@@ -60,40 +60,26 @@ def train_segmentation(chunks_count = 33):
           chunks_count=chunks_count)
 
 
-def cache_segmentation_training_data():
-    for i in range(35):
+def cache_training_data(split: str, chunks_list: list[int]):
+    for i in chunks_list:
         start_cache = time()
         print(f"Caching chunk {i}")
-        pdf_paragraph_tokens_list = get_segmentation_labeled_data(split="train", from_document_count=MAX_DOCUMENTS * i,
+        pdf_paragraph_tokens_list = get_segmentation_labeled_data(split="train" if split == "train" else "dev", from_document_count=MAX_DOCUMENTS * i,
                                                                   to_document_count=MAX_DOCUMENTS * (i + 1))
 
         if not pdf_paragraph_tokens_list:
             continue
 
         pdf_features_list = [pdf_paragraph_tokens.pdf_features for pdf_paragraph_tokens in pdf_paragraph_tokens_list]
-        model_configuration = MODEL_CONFIGURATION
-        model_configuration.context_size = 3
+
         trainer = ParagraphExtractorTrainer(pdfs_features=pdf_features_list, model_configuration=model_configuration)
         labels = []
         for pdf_paragraph_tokens, token, next_token in loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list):
             labels.append(pdf_paragraph_tokens.check_same_paragraph(token, next_token))
 
-        trainer.save_training_data(join("data", "training_data", "segmentation", "train", f"chunk_{i}"), labels)
+        chunk_folder = "train" if split == "train" else "val"
+        trainer.save_training_data(join("data", "training_data", "segmentation", chunk_folder, f"chunk_{i}"), labels)
         print("finished in", round(time() - start_cache, 1), "seconds\n")
-
-
-def cache_validation_data():
-    pdf_paragraph_tokens_list = get_segmentation_labeled_data(split="dev", from_document_count=0,
-                                                              to_document_count=999999999)
-
-    pdf_features_list = [pdf_paragraph_tokens.pdf_features for pdf_paragraph_tokens in pdf_paragraph_tokens_list]
-    trainer = ParagraphExtractorTrainer(pdfs_features=pdf_features_list, model_configuration=MODEL_CONFIGURATION)
-
-    labels = []
-    for pdf_paragraph_tokens, token, next_token in loop_pdf_paragraph_tokens(pdf_paragraph_tokens_list):
-        labels.append(pdf_paragraph_tokens.check_same_paragraph(token, next_token))
-
-    trainer.save_training_data(join("data", "training_data", "segmentation", "val", "chunk_0"), labels)
 
 
 def evaluate_results(test_chunk= 33):
@@ -154,5 +140,5 @@ def performance_over_time():
 if __name__ == '__main__':
     print("start")
     start = time()
-    cache_segmentation_training_data()
+    cache_training_data("train", list(range(18)))
     print("finished in", int(time() - start), "seconds")

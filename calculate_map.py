@@ -6,6 +6,7 @@ from time import time
 import numpy as np
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
+from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
 from pdf_features.Rectangle import Rectangle
 from pdf_token_type_labels.Label import Label
 from pdf_token_type_labels.TokenType import TokenType
@@ -85,31 +86,33 @@ def get_predictions():
 
     print("Predicting segmentation for", len(test_pdf_features), "pdfs")
 
-    configuration_dict = dict()
-    configuration_dict["context_size"] = 1
-    configuration_dict["num_boost_round"] = 500
-    configuration_dict["num_leaves"] = 500
-    configuration_dict["bagging_fraction"] = 0.8741546573792001
-    configuration_dict["lambda_l1"] = 3.741871910299135e-07
-    configuration_dict["lambda_l2"] = 3.394743918196975e-07
-    configuration_dict["feature_fraction"] = 0.17453493249431365
-    configuration_dict["bagging_freq"] = 9
-    configuration_dict["min_data_in_leaf"] = 35
-    configuration_dict["feature_pre_filter"] = False
-    configuration_dict["boosting_type"] = "gbdt"
-    configuration_dict["objective"] = "multiclass"
-    configuration_dict["metric"] = "multi_logloss"
-    configuration_dict["learning_rate"] = 0.1
-    configuration_dict["seed"] = 22
-    configuration_dict["num_class"] = 2
-    configuration_dict["verbose"] = -1
-    configuration_dict["deterministic"] = False
-    configuration_dict["resume_training"] = False
+    # configuration_dict = dict()
+    # configuration_dict["context_size"] = 1
+    # configuration_dict["num_boost_round"] = 331
+    # configuration_dict["num_leaves"] = 326
+    # configuration_dict["bagging_fraction"] = 0.8741546573792001
+    # configuration_dict["lambda_l1"] = 3.741871910299135e-07
+    # configuration_dict["lambda_l2"] = 3.394743918196975e-07
+    # configuration_dict["feature_fraction"] = 0.17453493249431365
+    # configuration_dict["bagging_freq"] = 9
+    # configuration_dict["min_data_in_leaf"] = 35
+    # configuration_dict["feature_pre_filter"] = False
+    # configuration_dict["boosting_type"] = "gbdt"
+    # configuration_dict["objective"] = "multiclass"
+    # configuration_dict["metric"] = "multi_logloss"
+    # configuration_dict["learning_rate"] = 0.1
+    # configuration_dict["seed"] = 22
+    # configuration_dict["num_class"] = 2
+    # configuration_dict["verbose"] = -1
+    # configuration_dict["deterministic"] = False
+    # configuration_dict["resume_training"] = False
+    model_configuration = MODEL_CONFIGURATION
+    model_configuration.context_size = 3
 
     model_configuration = ModelConfiguration(**configuration_dict)
 
     trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
-    segments: list[PdfSegment] = trainer.get_pdf_segments("model/segmentation_full_data_4.model")
+    segments: list[PdfSegment] = trainer.get_pdf_segments("model/4_jan_2024_segmentation.model")
 
     segments = [s for s in segments if s.segment_type in token_types_to_publaynet_types.keys()]
 
@@ -268,8 +271,9 @@ if __name__ == '__main__':
     start = time()
     print("predictions")
     # create_coco_sub_file()
-    # get_predictions()
+    get_predictions()
     # map_score(truth_path="data/publaynet/train_chunk_33.json", prediction_path="data/publaynet/predictions_chunk_33.json")
-    map_score(truth_path="data/publaynet/val.json", prediction_path="vgt_result/inference/coco_predictions.json")
+    # map_score(truth_path="data/publaynet/val.json", prediction_path="vgt_result/inference/coco_predictions.json")
+    map_score(truth_path="data/publaynet/val.json", prediction_path="data/publaynet/predictions.json")
 
     print("finished in", int(time() - start), "seconds")
