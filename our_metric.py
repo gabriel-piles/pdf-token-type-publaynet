@@ -57,8 +57,8 @@ def get_predictions():
 
     configuration_dict = dict()
     configuration_dict["context_size"] = 1
-    configuration_dict["num_boost_round"] = 500
-    configuration_dict["num_leaves"] = 500
+    configuration_dict["num_boost_round"] = 331
+    configuration_dict["num_leaves"] = 326
     configuration_dict["bagging_fraction"] = 0.8741546573792001
     configuration_dict["lambda_l1"] = 3.741871910299135e-07
     configuration_dict["lambda_l2"] = 3.394743918196975e-07
@@ -79,7 +79,7 @@ def get_predictions():
     model_configuration = ModelConfiguration(**configuration_dict)
 
     trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
-    prediction_segments: list[PdfSegment] = trainer.get_pdf_segments("model/4_jan_2024_segmentation.model")
+    prediction_segments: list[PdfSegment] = trainer.get_pdf_segments("model/4_jan_2024_segmentation_context_1.model")
 
     with open(PREDICTION_SEGMENTS_PICKLE_PATH, mode="wb") as file:
         pickle.dump(prediction_segments, file)
@@ -213,8 +213,10 @@ def print_scores():
     for token_type in TokenType:
         if count_per_category[token_type]:
             accuracy = round(100 * score_per_category[token_type] / count_per_category[token_type], 2)
-            accuracies.append(accuracy)
             print(token_type.value, f"{accuracy}%")
+
+            if token_type != TokenType.FIGURE:
+                accuracies.append(accuracy)
 
     print('Average', f"{round(sum(accuracies)/len(accuracies), 2)}%")
 
@@ -242,6 +244,6 @@ if __name__ == "__main__":
     # get_predictions()
     # get_truth_segments()
     # save_scores()
-    # print_scores()
-    show_mistakes()
+    print_scores()
+    # show_mistakes()
     print("finished in", round(time() - start, 1), "seconds")

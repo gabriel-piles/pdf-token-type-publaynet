@@ -92,8 +92,8 @@ def balance_data(x_train, labels):
     return x_train, labels
 
 
-def get_pdf_name_labels(split: str, extra_1_px=False, from_document_count: int = 0, to_document_count: int = 9999999999) -> \
-dict[str, list[Label]]:
+def get_pdf_name_labels(split: str, from_document_count: int = 0, to_document_count: int = 9999999999) -> dict[
+    str, list[Label]]:
     json_path = "data/publaynet/" + ("train" if split == "train" else "val") + ".json"
     source_labels = json.loads(Path(json_path).read_text())
 
@@ -107,19 +107,11 @@ dict[str, list[Label]]:
             continue
 
         category_id = publaynet_types_to_token_types[annotation['category_id']]
-        if extra_1_px:
-            label = Label(left=int(annotation['bbox'][0]) - 1,
-                          top=int(annotation['bbox'][1]) - 1,
-                          width=int(annotation['bbox'][2]) + 2,
-                          height=int(annotation['bbox'][3]) + 2,
-                          label_type=TokenType.from_text(category_id).get_index())
-
-        else:
-            label = Label(left=int(annotation['bbox'][0]),
-                          top=int(annotation['bbox'][1]),
-                          width=int(annotation['bbox'][2]),
-                          height=int(annotation['bbox'][3]),
-                          label_type=TokenType.from_text(category_id).get_index())
+        label = Label(left=int(annotation['bbox'][0]),
+                      top=int(annotation['bbox'][1]),
+                      width=int(annotation['bbox'][2]),
+                      height=int(annotation['bbox'][3]),
+                      label_type=TokenType.from_text(category_id).get_index())
 
         pdf_name_labels.setdefault(pdf_name, list()).append(label)
 
@@ -161,24 +153,27 @@ def load_pdf_feature(split: str, pdf_name: str):
         return pickle.load(f)
 
 
-def get_segmentation_labeled_data(split: str, from_document_count: int = 0, to_document_count: int = 9999999999) -> list[
-    PdfParagraphTokens]:
-    pdf_name_labels = get_pdf_name_labels(split, True, from_document_count, to_document_count)
+def get_segmentation_labeled_data(split: str, from_document_count: int = 0, to_document_count: int = 9999999999) -> list[PdfParagraphTokens]:
+    pdf_name_labels = get_pdf_name_labels(split, from_document_count, to_document_count)
 
     if not pdf_name_labels:
         return []
 
+    wrong_count = 0
+    print("total", len(pdf_name_labels))
     pdfs_paragraphs_tokens: list[PdfParagraphTokens] = list()
     for pdf_name, labels in pdf_name_labels.items():
         pdf_feature = load_pdf_feature(split, pdf_name)
 
         if not pdf_feature:
+            wrong_count += 1
             continue
 
         pages = [PageLabels(number=1, labels=labels)]
         pdf_paragraphs_tokens = PdfParagraphTokens.set_paragraphs(pdf_feature, PdfLabels(pages=pages))
         pdfs_paragraphs_tokens.append(pdf_paragraphs_tokens)
 
+    print("wrong", wrong_count)
     return pdfs_paragraphs_tokens
 
 
@@ -202,6 +197,6 @@ def show_segmentation():
 if __name__ == '__main__':
     start = time()
     print("start")
-    cache_pdf_features("dev")
+    get_segmentation_labeled_data("dev")
     print("finished in", round(time() - start, 1), "seconds")
     print()

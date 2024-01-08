@@ -56,7 +56,14 @@ def get_one_annotation(index, image_id, segment: PdfSegment):
 
 def get_predictions():
     pdf_name_labels = get_pdf_name_labels('dev')
-    test_pdf_features = [load_pdf_feature('dev', x) for x in pdf_name_labels if load_pdf_feature('dev', x)]
+    test_pdf_features = list()
+    for x in list(pdf_name_labels.keys()):
+        pdf_features = load_pdf_feature('dev', x)
+
+        if not pdf_features:
+            continue
+
+        test_pdf_features.append(pdf_features)
 
     print("Predicting token types for", len(test_pdf_features), "pdfs")
     configuration_dict = dict()
@@ -86,33 +93,30 @@ def get_predictions():
 
     print("Predicting segmentation for", len(test_pdf_features), "pdfs")
 
-    # configuration_dict = dict()
-    # configuration_dict["context_size"] = 1
-    # configuration_dict["num_boost_round"] = 331
-    # configuration_dict["num_leaves"] = 326
-    # configuration_dict["bagging_fraction"] = 0.8741546573792001
-    # configuration_dict["lambda_l1"] = 3.741871910299135e-07
-    # configuration_dict["lambda_l2"] = 3.394743918196975e-07
-    # configuration_dict["feature_fraction"] = 0.17453493249431365
-    # configuration_dict["bagging_freq"] = 9
-    # configuration_dict["min_data_in_leaf"] = 35
-    # configuration_dict["feature_pre_filter"] = False
-    # configuration_dict["boosting_type"] = "gbdt"
-    # configuration_dict["objective"] = "multiclass"
-    # configuration_dict["metric"] = "multi_logloss"
-    # configuration_dict["learning_rate"] = 0.1
-    # configuration_dict["seed"] = 22
-    # configuration_dict["num_class"] = 2
-    # configuration_dict["verbose"] = -1
-    # configuration_dict["deterministic"] = False
-    # configuration_dict["resume_training"] = False
-    model_configuration = MODEL_CONFIGURATION
-    model_configuration.context_size = 3
-
+    configuration_dict = dict()
+    configuration_dict["context_size"] = 1
+    configuration_dict["num_boost_round"] = 331
+    configuration_dict["num_leaves"] = 326
+    configuration_dict["bagging_fraction"] = 0.8741546573792001
+    configuration_dict["lambda_l1"] = 3.741871910299135e-07
+    configuration_dict["lambda_l2"] = 3.394743918196975e-07
+    configuration_dict["feature_fraction"] = 0.17453493249431365
+    configuration_dict["bagging_freq"] = 9
+    configuration_dict["min_data_in_leaf"] = 35
+    configuration_dict["feature_pre_filter"] = False
+    configuration_dict["boosting_type"] = "gbdt"
+    configuration_dict["objective"] = "multiclass"
+    configuration_dict["metric"] = "multi_logloss"
+    configuration_dict["learning_rate"] = 0.1
+    configuration_dict["seed"] = 22
+    configuration_dict["num_class"] = 2
+    configuration_dict["verbose"] = -1
+    configuration_dict["deterministic"] = False
+    configuration_dict["resume_training"] = False
     model_configuration = ModelConfiguration(**configuration_dict)
 
     trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
-    segments: list[PdfSegment] = trainer.get_pdf_segments("model/4_jan_2024_segmentation.model")
+    segments: list[PdfSegment] = trainer.get_pdf_segments("model/4_jan_2024_segmentation_context_1.model")
 
     segments = [s for s in segments if s.segment_type in token_types_to_publaynet_types.keys()]
 

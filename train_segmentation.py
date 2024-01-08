@@ -6,7 +6,6 @@ from time import time
 import numpy as np
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfParagraphTokens import PdfParagraphTokens
-from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 
 from calculate_map import map_score
@@ -17,7 +16,7 @@ from train import train
 
 MAX_DOCUMENTS = 10000
 
-SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "4_jan_2024_segmentation_model.model")
+SEGMENTATION_MODEL_PATH = join(Path(__file__).parent, "model", "new.model")
 
 configuration_dict = dict()
 configuration_dict["context_size"] = 1
@@ -141,4 +140,5 @@ if __name__ == '__main__':
     print("start")
     start = time()
     cache_training_data("train", list(range(18)))
+    # print(model_configuration)
     print("finished in", int(time() - start), "seconds")
