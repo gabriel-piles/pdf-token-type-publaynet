@@ -156,6 +156,7 @@ def load_pdf_feature(split: str, pdf_name: str):
 def get_segmentation_labeled_data(split: str, from_document_count: int = 0, to_document_count: int = 9999999999) -> list[PdfParagraphTokens]:
     pdf_name_labels = get_pdf_name_labels(split, from_document_count, to_document_count)
 
+    # PMC5359411_00009
     if not pdf_name_labels:
         return []
 

@@ -6,7 +6,6 @@ from time import time
 import numpy as np
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
-from paragraph_extraction_trainer.model_configuration import MODEL_CONFIGURATION
 from pdf_features.Rectangle import Rectangle
 from pdf_token_type_labels.Label import Label
 from pdf_token_type_labels.TokenType import TokenType

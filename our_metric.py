@@ -1,10 +1,13 @@
+import json
 import pickle
 import random
+from pathlib import Path
 from time import time
 
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfParagraphTokens import PdfParagraphTokens
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
+from pdf_token_type_labels.Label import Label
 from pdf_token_type_labels.PageLabels import PageLabels
 from pdf_token_type_labels.PdfLabels import PdfLabels
 from pdf_token_type_labels.TaskMistakes import TaskMistakes
@@ -14,7 +17,8 @@ from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from tqdm import tqdm
 
 from adjust_bboxes import copy_pdf_to_mistakes
-from get_data import get_segmentation_labeled_data, get_pdf_name_labels, load_pdf_feature, PDF_LABELED_DATA_ROOT_PATH
+from get_data import get_segmentation_labeled_data, get_pdf_name_labels, load_pdf_feature, PDF_LABELED_DATA_ROOT_PATH, \
+    publaynet_types_to_token_types
 
 TRUTH_SEGMENTS_PICKLE_PATH = "model/truth_segments.pickle"
 PREDICTION_SEGMENTS_PICKLE_PATH = "model/prediction_segments.pickle"
@@ -241,9 +245,8 @@ def one_document_get_segmentation_labeled_data(pdf_name: str) -> list[PdfParagra
 if __name__ == "__main__":
     start = time()
     print("start")
-    # get_predictions()
     # get_truth_segments()
-    # save_scores()
+    save_scores()
     print_scores()
     # show_mistakes()
     print("finished in", round(time() - start, 1), "seconds")
