@@ -1,13 +1,12 @@
-import json
 import pickle
 import random
-from pathlib import Path
+from os import listdir
+from os.path import join
 from time import time
 
 from paragraph_extraction_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from paragraph_extraction_trainer.PdfParagraphTokens import PdfParagraphTokens
 from paragraph_extraction_trainer.PdfSegment import PdfSegment
-from pdf_token_type_labels.Label import Label
 from pdf_token_type_labels.PageLabels import PageLabels
 from pdf_token_type_labels.PdfLabels import PdfLabels
 from pdf_token_type_labels.TaskMistakes import TaskMistakes
@@ -17,8 +16,7 @@ from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from tqdm import tqdm
 
 from adjust_bboxes import copy_pdf_to_mistakes
-from get_data import get_segmentation_labeled_data, get_pdf_name_labels, load_pdf_feature, PDF_LABELED_DATA_ROOT_PATH, \
-    publaynet_types_to_token_types
+from get_data import get_segmentation_labeled_data, get_pdf_name_labels, load_pdf_feature, PDF_LABELED_DATA_ROOT_PATH
 
 TRUTH_SEGMENTS_PICKLE_PATH = "model/truth_segments.pickle"
 PREDICTION_SEGMENTS_PICKLE_PATH = "model/prediction_segments.pickle"
@@ -117,12 +115,16 @@ def show_mistakes():
     for prediction_segment in prediction_segments:
         prediction_segments_per_pdf.setdefault(prediction_segment.pdf_name, []).append(prediction_segment)
 
-    keys_sample = random.sample(list(truth_segments_per_pdf.keys()), k=30)
+    pdfs_in_labeled_data = list(listdir(join(PDF_LABELED_DATA_ROOT_PATH, 'pdfs')))
+    keys_sample = [x for x in truth_segments_per_pdf.keys() if x in pdfs_in_labeled_data]
     for pdf_name in tqdm(keys_sample):
-        copy_pdf_to_mistakes('dev', pdf_name)
-        task_mistakes = TaskMistakes(PDF_LABELED_DATA_ROOT_PATH, "PubLayNet_huridocs_metric", pdf_name)
+        # copy_pdf_to_mistakes('dev', pdf_name)
+        task_mistakes = TaskMistakes(PDF_LABELED_DATA_ROOT_PATH, "HURIDOCS_PubLayNet_val_huridocs_metric", pdf_name)
 
         for truth_segment in truth_segments_per_pdf[pdf_name]:
+            if truth_segment.segment_type == TokenType.HEADER:
+                continue
+
             annotated = False
             for prediction_segment in prediction_segments_per_pdf[pdf_name]:
                 metadata = truth_segment.segment_type.value.lower() + " pred:" + prediction_segment.segment_type.value.lower()
@@ -133,7 +135,7 @@ def show_mistakes():
                     annotated = True
                     break
 
-                if intersection_percentage == 100:
+                if intersection_percentage == 100 and prediction_segment.segment_type != TokenType.HEADER:
                     task_mistakes.add(1, truth_segment.bounding_box, 0, 1, metadata)
                     annotated = True
                     break
@@ -144,7 +146,12 @@ def show_mistakes():
 
                     intersection_percentage = truth_segment.bounding_box.get_intersection_percentage(
                         prediction_segment.bounding_box)
-                    if intersection_percentage > 0:
+
+                    if intersection_percentage > 0 and prediction_segment.segment_type == TokenType.HEADER:
+                        annotated = True
+                        break
+
+                    if intersection_percentage > 0 and prediction_segment.segment_type != TokenType.HEADER:
                         annotated = True
                         task_mistakes.add(1, truth_segment.bounding_box, 0, 1, "Truth:" + truth_segment.segment_type.value.lower())
                         task_mistakes.add(1, prediction_segment.bounding_box, 0, 1, metadata)
@@ -246,7 +253,9 @@ if __name__ == "__main__":
     start = time()
     print("start")
     # get_truth_segments()
-    save_scores()
-    print_scores()
+    # get_predictions()
+    show_mistakes()
+    # save_scores()
+    # print_scores()
     # show_mistakes()
     print("finished in", round(time() - start, 1), "seconds")

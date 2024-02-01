@@ -10,7 +10,8 @@ FIGURE 86.03%
 TITLE 98.06%
 TEXT 92.85%
 HEADER 96.87%
-Average 92.02%
+
+Average 89.8%
 
 
 VGT
@@ -25,4 +26,5 @@ FIGURE 96.33%
 TITLE 94.34%
 TEXT 92.03%
 HEADER 95.88%
-Average 95.22%
+
+Average 95.3%
