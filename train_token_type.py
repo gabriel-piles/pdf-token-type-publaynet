@@ -8,9 +8,9 @@ from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 from get_data import load_labeled_data
 from train import train
 
-TOKEN_TYPE_MODEL_PATH = join(Path(__file__).parent, "model", "token_type.model")
+TOKEN_TYPE_MODEL_PATH = join(Path(__file__).parent, "model", "token_type_unicode.model")
 
-MAX_DOCUMENTS = 10000
+MAX_DOCUMENTS = 5000
 token_type_training_data_path = join("data", "training_data", "token_type", "train")
 
 configuration_dict = dict()
@@ -45,7 +45,7 @@ def train_token_type():
 
 
 def cache_token_type_training_data():
-    for i in range(8, 35):
+    for i in range(6, 8):
         start_cache = time()
         print(f"Caching chunk {i}")
         train_pdf_features = load_labeled_data(split="train", from_document_count=MAX_DOCUMENTS * i,

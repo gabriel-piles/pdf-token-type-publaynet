@@ -1,9 +1,9 @@
-git+https://github.com/huridocs/pdf-tokens-type-labeler@d237b570f1f3d09dbbd16d0868b7fd9931b327d6
+git+https://github.com/huridocs/pdf-tokens-type-labeler@5b2d4b0a6710ff7c2cb8e1d2863cdc957cd56fa5
 git+https://github.com/huridocs/pdf_paragraphs_extraction@9765c33f32139d6043e67d30b30fd2ba10f4da1d
 mapcalc
-pycocotools~=2.0.7
-lightgbm~=4.1.0
-optuna~=3.4.0
-numpy~=1.26.1
-scikit-learn~=1.3.1
-pydantic~=2.4.2
+pycocotools==2.0.7
+lightgbm==4.3.0
+optuna==3.5.0
+numpy==1.26.4
+scikit-learn==1.4.0
+pydantic==2.6.1

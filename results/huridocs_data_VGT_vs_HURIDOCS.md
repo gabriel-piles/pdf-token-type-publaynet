@@ -1,6 +1,8 @@
 ### huridocs
 
-#### scores
+
+### HURIDOCS paragraph extraction and token type models trained with HURIDOCS labeled data
+
 FORMULA 20.0%
 FOOTNOTE 71.43%
 LIST 12.61%
@@ -13,6 +15,86 @@ PAGE_NUMBER 97.79%
 IMAGE_CAPTION 27.27%
 MARK 100.0%
 Average 58.09%
+
+### HURIDOCS models trained with D4LA and not trained with HURIDOCS labeled data
+
+token type
+FORMULA  0%
+FOOTNOTE  0%
+LIST  3%
+TABLE  0%
+FIGURE  0%
+TITLE  31%
+TEXT  95%
+HEADER  41%
+PAGE_NUMBER  0%
+IMAGE_CAPTION  0%
+FOOTER  0%
+TABLE_OF_CONTENT  0%
+MARK 33%
+
+Average 16%
+
+???? Segmentation and token type
+FORMULA: 0% [Has no labels]
+FOOTNOTE: 0.0%
+LIST: 0.0%
+TABLE: 0.0%
+FIGURE: 0.0%
+TITLE: 0.0%
+TEXT: 37.85%
+HEADER: 0% [Has no labels]
+PAGE_NUMBER: 0.0%
+IMAGE_CAPTION: 0% [Has no labels]
+FOOTER: 0% [Has no labels]
+TABLE_OF_CONTENT: 0% [Has no labels]
+MARK: 0% [Has no labels]
+Average Accuracy: 3%
+
+### VGT trained with D4LA and not trained with our data
+
+error_segmentation
+{'FORMULA': 5197, 'FOOTNOTE': 231262, 'LIST': 49749, 'TABLE': 1467, 'FIGURE': 2639, 'TITLE': 43210, 'TEXT': 666654, 'HEADER': 24, 'PAGE_NUMBER': 13791, 'IMAGE_CAPTION': 2505, 'MARK': 158}
+error_token_type
+{'FORMULA': 19, 'FOOTNOTE': 134, 'LIST': 101, 'TABLE': 3, 'FIGURE': 8, 'TITLE': 114, 'TEXT': 68, 'IMAGE_CAPTION': 9, 'MARK': 1}
+FORMULA 5.0%
+FOOTNOTE 70.83%
+LIST 8.11%
+TABLE 50.0%
+FIGURE 0.0%
+TITLE 40.1%
+TEXT 73.54%
+HEADER 100.0%
+PAGE_NUMBER 100.0%
+IMAGE_CAPTION 9.09%
+MARK 50.0%
+Average 46.06%
+
+
+### VGT trained with D4LA and trained with our data as well
+
+error_segmentation
+{'FORMULA': 30247, 'FOOTNOTE': 382208, 'LIST': 92498, 'TABLE': 7616, 'FIGURE': 9999, 'TITLE': 102571, 'TEXT': 1770649, 'HEADER': 2101, 'PAGE_NUMBER': 40549, 'IMAGE_CAPTION': 11812, 'MARK': 342}
+error_token_type
+{'FOOTNOTE': 68, 'LIST': 91, 'FIGURE': 3, 'TITLE': 111, 'TEXT': 69, 'IMAGE_CAPTION': 1}
+FORMULA 10.0%
+FOOTNOTE 66.27%
+LIST 3.6%
+TABLE 0.0%
+FIGURE 9.09%
+TITLE 26.24%
+TEXT 31.81%
+HEADER 100.0%
+PAGE_NUMBER 100.0%
+IMAGE_CAPTION 9.09%
+MARK 50.0%
+Average 36.92%
+
+
+
+### Note
+
+Errors for HURIDOCS models trained with HURIDOCS labeled data
 
 #### error_segmentation
 
@@ -39,43 +121,4 @@ Average 58.09%
  'PAGE_NUMBER': 3
  'IMAGE_CAPTION': 8
 
-
-### D4LA not trained with our data
-
-error_segmentation
-{'FORMULA': 5197, 'FOOTNOTE': 231262, 'LIST': 49749, 'TABLE': 1467, 'FIGURE': 2639, 'TITLE': 43210, 'TEXT': 666654, 'HEADER': 24, 'PAGE_NUMBER': 13791, 'IMAGE_CAPTION': 2505, 'MARK': 158}
-error_token_type
-{'FORMULA': 19, 'FOOTNOTE': 134, 'LIST': 101, 'TABLE': 3, 'FIGURE': 8, 'TITLE': 114, 'TEXT': 68, 'IMAGE_CAPTION': 9, 'MARK': 1}
-FORMULA 5.0%
-FOOTNOTE 70.83%
-LIST 8.11%
-TABLE 50.0%
-FIGURE 0.0%
-TITLE 40.1%
-TEXT 73.54%
-HEADER 100.0%
-PAGE_NUMBER 100.0%
-IMAGE_CAPTION 9.09%
-MARK 50.0%
-Average 46.06%
-
-
-### D4LA trained with our data
-
-error_segmentation
-{'FORMULA': 30247, 'FOOTNOTE': 382208, 'LIST': 92498, 'TABLE': 7616, 'FIGURE': 9999, 'TITLE': 102571, 'TEXT': 1770649, 'HEADER': 2101, 'PAGE_NUMBER': 40549, 'IMAGE_CAPTION': 11812, 'MARK': 342}
-error_token_type
-{'FOOTNOTE': 68, 'LIST': 91, 'FIGURE': 3, 'TITLE': 111, 'TEXT': 69, 'IMAGE_CAPTION': 1}
-FORMULA 10.0%
-FOOTNOTE 66.27%
-LIST 3.6%
-TABLE 0.0%
-FIGURE 9.09%
-TITLE 26.24%
-TEXT 31.81%
-HEADER 100.0%
-PAGE_NUMBER 100.0%
-IMAGE_CAPTION 9.09%
-MARK 50.0%
-Average 36.92%
 
