@@ -18,38 +18,18 @@ Average 58.09%
 
 ### HURIDOCS models trained with D4LA and not trained with HURIDOCS labeled data
 
-token type
-FORMULA  0%
-FOOTNOTE  0%
-LIST  3%
-TABLE  0%
-FIGURE  0%
-TITLE  31%
-TEXT  95%
-HEADER  41%
-PAGE_NUMBER  0%
-IMAGE_CAPTION  0%
-FOOTER  0%
-TABLE_OF_CONTENT  0%
-MARK 33%
-
-Average 16%
-
-???? Segmentation and token type
-FORMULA: 0% [Has no labels]
+FORMULA: 0.0%
 FOOTNOTE: 0.0%
-LIST: 0.0%
+LIST: 3.6%
 TABLE: 0.0%
 FIGURE: 0.0%
-TITLE: 0.0%
-TEXT: 37.85%
-HEADER: 0% [Has no labels]
+TITLE: 27.72%
+TEXT: 93.07%
+HEADER: 41.18%
 PAGE_NUMBER: 0.0%
-IMAGE_CAPTION: 0% [Has no labels]
-FOOTER: 0% [Has no labels]
-TABLE_OF_CONTENT: 0% [Has no labels]
-MARK: 0% [Has no labels]
-Average Accuracy: 3%
+IMAGE_CAPTION: 0.0%
+MARK: 0.0%
+
 
 ### VGT trained with D4LA and not trained with our data
 

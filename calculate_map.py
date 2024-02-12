@@ -88,7 +88,7 @@ def get_predictions():
 
     model_configuration = ModelConfiguration(**configuration_dict)
     trainer = TokenTypeTrainer(test_pdf_features, model_configuration)
-    trainer.set_token_types("model/token_type_full_data.model")
+    trainer.set_token_types("model/token_type_unicode.model")
 
     print("Predicting segmentation for", len(test_pdf_features), "pdfs")
 
@@ -115,7 +115,7 @@ def get_predictions():
     model_configuration = ModelConfiguration(**configuration_dict)
 
     trainer = ParagraphExtractorTrainer(pdfs_features=test_pdf_features, model_configuration=model_configuration)
-    segments: list[PdfSegment] = trainer.get_pdf_segments("model/4_jan_2024_segmentation_context_1.model")
+    segments: list[PdfSegment] = trainer.get_pdf_segments("model/segmentation_unicode.model")
 
     segments = [s for s in segments if s.segment_type in token_types_to_publaynet_types.keys()]
 
