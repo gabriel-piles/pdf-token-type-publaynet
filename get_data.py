@@ -124,7 +124,7 @@ def get_pdf_name_labels(split: str, from_document_count: int = 0, to_document_co
 
 def cache_pdf_features(split: str, max_documents: int = 99999999):
     # change default token type to 7 in PageLabels
-    pdf_name_labels = get_pdf_name_labels(split, False, 0, max_documents)
+    pdf_name_labels = get_pdf_name_labels(split)
     cache_pdf_features_from_path_labels(split, pdf_name_labels)
 
 
@@ -198,6 +198,7 @@ def show_segmentation():
 if __name__ == '__main__':
     start = time()
     print("start")
-    get_segmentation_labeled_data("dev")
+    # get_segmentation_labeled_data("dev")
+    cache_pdf_features("dev")
     print("finished in", round(time() - start, 1), "seconds")
     print()

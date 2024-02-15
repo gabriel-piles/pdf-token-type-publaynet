@@ -12,7 +12,7 @@ from pdf_token_type_labels.TokenType import TokenType
 from tqdm import tqdm
 
 from get_data import publaynet_types_to_token_types, load_pdf_feature, PDF_LABELED_DATA_ROOT_PATH
-from our_metric import PREDICTION_SEGMENTS_PICKLE_PATH
+from HURIDOCS_metric import PREDICTION_SEGMENTS_PICKLE_PATH
 from pdfs_in_labeled_data import pdfs_in_labeled_data
 
 MISTAKES_NAME = "VGT_PubLayNet"
@@ -146,5 +146,6 @@ def show_predictions():
 
 
 if __name__ == '__main__':
-    get_vgt_predictions()
+    # get_vgt_predictions()
     # show_predictions()
+

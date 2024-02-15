@@ -56,7 +56,7 @@ def get_one_annotation(index, image_id, segment: PdfSegment):
 def get_predictions():
     pdf_name_labels = get_pdf_name_labels('dev')
     test_pdf_features = list()
-    for x in list(pdf_name_labels.keys()):
+    for x in list(pdf_name_labels.keys())[:10]:
         pdf_features = load_pdf_feature('dev', x)
 
         if not pdf_features:
@@ -124,7 +124,7 @@ def get_predictions():
     image_name_image_id = get_image_name_image_id()
     annotations = []
     for i, segment in enumerate(segments):
-        annotations.append(get_one_annotation(i, image_name_image_id[segment.pdf_name], segment))
+        annotations.append(get_one_annotation(i, image_name_image_id[segment.pdf_name.split('.')[0]], segment))
 
     predictions_coco_format['annotations'] = annotations
     Path("data/publaynet/predictions.json").write_text(json.dumps(predictions_coco_format))
